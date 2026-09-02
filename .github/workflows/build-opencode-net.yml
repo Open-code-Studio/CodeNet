@@ -30,7 +30,7 @@ jobs:
   build-macos:
     name: Build macOS (Apple Silicon)
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_os == 'osx' || github.event_name != 'workflow_dispatch' }}
-    runs-on: macos-27
+    runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
