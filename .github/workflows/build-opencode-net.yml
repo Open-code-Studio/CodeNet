@@ -1,0 +1,130 @@
+name: Build OpenCodeNet Runtime
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      target_os:
+        description: 'Target OS'
+        required: true
+        default: 'osx'
+        type: choice
+        options:
+          - osx
+          - linux
+          - win
+      target_arch:
+        description: 'Target Architecture'
+        required: true
+        default: 'arm64'
+        type: choice
+        options:
+          - arm64
+          - x64
+          - arm
+
+jobs:
+  build-macos:
+    name: Build macOS (Apple Silicon)
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_os == 'osx' || github.event_name != 'workflow_dispatch' }}
+    runs-on: macos-27
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [arm64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          brew install cmake ninja icu4c
+
+      - name: Build .NET Runtime for macOS arm64
+        run: |
+          ./build.sh -arch ${{ matrix.arch }} -os osx -c Release \
+            --subset clr+libs+packs \
+            --ninja \
+            /p:TargetOS=osx \
+            /p:TargetArchitecture=${{ matrix.arch }} \
+            /p:Configuration=Release
+
+      - name: Package Runtime
+        run: |
+          mkdir -p artifacts/package
+          tar czf artifacts/package/dotnet-runtime-osx-${{ matrix.arch }}.tar.gz \
+            -C artifacts/bin/runtime/Release/net10.0/osx-${{ matrix.arch }} .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-runtime-osx-${{ matrix.arch }}
+          path: artifacts/package/dotnet-runtime-osx-${{ matrix.arch }}.tar.gz
+
+  build-linux:
+    name: Build Linux (${{ matrix.arch }})
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_os == 'linux' || false }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build .NET Runtime for Linux ${{ matrix.arch }}
+        run: |
+          ./build.sh -arch ${{ matrix.arch }} -os linux -c Release \
+            --subset clr+libs+packs \
+            --ninja \
+            /p:TargetOS=linux \
+            /p:TargetArchitecture=${{ matrix.arch }} \
+            /p:Configuration=Release
+
+      - name: Package Runtime
+        run: |
+          mkdir -p artifacts/package
+          tar czf artifacts/package/dotnet-runtime-linux-${{ matrix.arch }}.tar.gz \
+            -C artifacts/bin/runtime/Release/net10.0/linux-${{ matrix.arch }} .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-runtime-linux-${{ matrix.arch }}
+          path: artifacts/package/dotnet-runtime-linux-${{ matrix.arch }}.tar.gz
+
+  build-windows:
+    name: Build Windows (${{ matrix.arch }})
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_os == 'win' || false }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build .NET Runtime for Windows ${{ matrix.arch }}
+        run: |
+          .\build.cmd -arch ${{ matrix.arch }} -os win -c Release `
+            --subset clr+libs+packs `
+            /p:TargetOS=win `
+            /p:TargetArchitecture=${{ matrix.arch }} `
+            /p:Configuration=Release
+
+      - name: Package Runtime
+        run: |
+          mkdir artifacts\package -Force
+          Compress-Archive -Path artifacts\bin\runtime\Release\net10.0\win-${{ matrix.arch }}\* `
+            -DestinationPath artifacts\package\dotnet-runtime-win-${{ matrix.arch }}.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-runtime-win-${{ matrix.arch }}
+          path: artifacts\package\dotnet-runtime-win-${{ matrix.arch }}.zip
