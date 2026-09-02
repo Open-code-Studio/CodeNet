@@ -603,7 +603,7 @@ static LPVOID ReserveVirtualMemory(
     }
 #endif
 
-#ifdef __HAIKU__
+#if defined(__HAIKU__) || defined(__APPLE__)
         mmapFlags |= MAP_NORESERVE;
 #endif
 

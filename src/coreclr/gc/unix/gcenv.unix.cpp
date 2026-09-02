@@ -102,7 +102,7 @@ extern "C"
 
 #endif // __APPLE__
 
-#ifdef __HAIKU__
+#if defined(__HAIKU__) || defined(__APPLE__)
 #include <OS.h>
 #endif // __HAIKU__
 
@@ -556,7 +556,7 @@ static void* VirtualReserveInner(size_t size, size_t alignment, uint32_t flags, 
 
     size_t alignedSize = size + (alignment - OS_PAGE_SIZE);
     int mmapFlags = MAP_ANON | MAP_PRIVATE | hugePagesFlag;
-#ifdef __HAIKU__
+#if defined(__HAIKU__) || defined(__APPLE__)
     mmapFlags |= MAP_NORESERVE;
 #endif
     void * pRetVal = mmap(nullptr, alignedSize, PROT_NONE, mmapFlags, -1, 0);
@@ -713,7 +713,7 @@ bool GCToOSInterface::VirtualDecommit(void* address, size_t size)
     // longer need these pages. Also, GC depends on re-committed pages to
     // be zeroed-out.
     int mmapFlags = MAP_FIXED | MAP_ANON | MAP_PRIVATE;
-#ifdef TARGET_HAIKU
+#if defined(TARGET_HAIKU) || defined(__APPLE__)
     mmapFlags |= MAP_NORESERVE;
 #endif
     bool bRetVal = mmap(address, size, PROT_NONE, mmapFlags, -1, 0) != MAP_FAILED;
