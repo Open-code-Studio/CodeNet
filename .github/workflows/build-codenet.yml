@@ -1,4 +1,4 @@
-name: Build OpenCodeNet Runtime
+name: Build CodeNet Runtime
 
 on:
   push:
