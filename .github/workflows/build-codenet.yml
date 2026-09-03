@@ -47,7 +47,8 @@ jobs:
       - name: Build .NET Runtime for macOS arm64
         run: |
           ./build.sh -arch ${{ matrix.arch }} -os osx -c Release \
-            --subset clr+libs+packs \
+            --subset clr+libs \
+            --clean \
             --ninja \
             /p:TargetOS=osx \
             /p:TargetArchitecture=${{ matrix.arch }} \
@@ -80,7 +81,8 @@ jobs:
       - name: Build .NET Runtime for Linux ${{ matrix.arch }}
         run: |
           ./build.sh -arch ${{ matrix.arch }} -os linux -c Release \
-            --subset clr+libs+packs \
+            --subset clr+libs \
+            --clean \
             --ninja \
             /p:TargetOS=linux \
             /p:TargetArchitecture=${{ matrix.arch }} \
