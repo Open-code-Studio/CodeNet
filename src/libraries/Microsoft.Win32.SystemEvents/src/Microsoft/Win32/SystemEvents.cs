@@ -480,7 +480,7 @@ namespace Microsoft.Win32
                 s_windowThread = new Thread(new ThreadStart(systemEvents.WindowThreadProc))
                 {
                     IsBackground = true,
-                    Name = ".NET System Events"
+                    Name = "CodeNet System Events"
                 };
                 s_windowThread.Start();
                 s_eventWindowReady.WaitOne();
@@ -659,7 +659,7 @@ namespace Microsoft.Win32
 
             IntPtr hInstance = Interop.Kernel32.GetModuleHandle(null);
 
-            s_className = $".NET-BroadcastEventWindow.{AppDomain.CurrentDomain.GetHashCode():x}.0";
+            s_className = $"CodeNet-BroadcastEventWindow.{AppDomain.CurrentDomain.GetHashCode():x}.0";
 
             fixed (char* className = s_className)
             {

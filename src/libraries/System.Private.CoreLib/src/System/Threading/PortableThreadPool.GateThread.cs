@@ -264,7 +264,7 @@ namespace System.Threading
                     {
                         IsThreadPoolThread = true,
                         IsBackground = true,
-                        Name = ".NET TP Gate"
+                        Name = "CodeNet TP Gate"
                     };
                     gateThread.UnsafeStart();
                 }

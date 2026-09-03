@@ -37,7 +37,7 @@ namespace System.Threading
             // using UnsafeStart() instead of Start()
             Thread timerThread = new Thread(TimerThread)
             {
-                Name = ".NET Timer",
+                Name = "CodeNet Timer",
                 IsBackground = true
             };
             timerThread.UnsafeStart();

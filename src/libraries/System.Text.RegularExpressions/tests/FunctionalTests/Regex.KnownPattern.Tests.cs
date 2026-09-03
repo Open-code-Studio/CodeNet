@@ -36,7 +36,7 @@ namespace System.Text.RegularExpressions.Tests
                 "<A HREF=\"http://www.microsoft.com\">" +
                 "Microsoft Corporation Home Page</A></P>" +
                 "<A HREF=\"http://blogs.msdn.com/bclteam\">" +
-                ".NET Base Class Library blog</A></P>";
+                "CodeNet Base Class Library blog</A></P>";
 
             Regex r = await RegexHelpers.GetRegexAsync(engine, HrefPattern, RegexOptions.IgnoreCase);
 

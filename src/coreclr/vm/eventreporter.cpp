@@ -88,7 +88,7 @@ EventReporter::EventReporter(EventReporterType type)
     m_Description.Append(VER_FILEVERSION_STR_L);
     m_Description.Append(W("\n"));
 
-    m_Description.Append(W(".NET Version: "));
+    m_Description.Append(W("CodeNet Version: "));
     m_Description.Append(CLR_PRODUCT_VERSION_L);
     m_Description.Append(W("\n"));
 
@@ -407,7 +407,7 @@ void EventReporter::Report()
 
     if (ctSize > 0)
     {
-        DWORD dwRetVal = ClrReportEvent(W(".NET Runtime"),
+        DWORD dwRetVal = ClrReportEvent(W("CodeNet Runtime"),
                        EVENTLOG_ERROR_TYPE,
                        0,
                        eventID,

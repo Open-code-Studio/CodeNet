@@ -605,7 +605,7 @@ static EVP_PKEY* LoadKeyFromEngine(
                     // Some engines do not tolerate having NULL passed to the ui_method parameter.
                     // We re-try with a non-NULL UI_METHOD.
                     ERR_clear_error();
-                    ui = UI_create_method(".NET NULL UI");
+                    ui = UI_create_method("CodeNet NULL UI");
 
                     if (ui)
                     {

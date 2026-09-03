@@ -449,7 +449,7 @@ namespace System.CodeDom.Compiler.Tests
                   }");
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework outputs C# keywords rather than type names")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework outputs C# keywords rather than type names")]
         [Theory]
         [InlineData(typeof(byte), "void System.Byte.MyMethod() { }")]
         [InlineData(typeof(short), "void System.Int16.MyMethod() { }")]

@@ -132,7 +132,7 @@ namespace System.CodeDom.Compiler.Tests
 
         [Theory]
         [MemberData(nameof(CreateEscapedIdentifier_TestData))]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework is missing some newer keywords")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework is missing some newer keywords")]
         public void CreateEscapedIdentifier_Invoke_ReturnsExpected(string value, string expected)
         {
             ICodeGenerator generator = GetGenerator();
@@ -140,7 +140,7 @@ namespace System.CodeDom.Compiler.Tests
         }
 
         [Fact]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework throws a NullReferenceException")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework throws a NullReferenceException")]
         public void CreateEscapedIdentifier_NullValue_ThrowsArgumentNullException()
         {
             ICodeGenerator generator = GetGenerator();
@@ -180,7 +180,7 @@ namespace System.CodeDom.Compiler.Tests
 
         [Theory]
         [MemberData(nameof(CreateValidIdentifier_TestData))]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework is missing some newer keywords")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework is missing some newer keywords")]
         public void CreateValidIdentifier_Invoke_ReturnsExpected(string value, string expected)
         {
             ICodeGenerator generator = GetGenerator();
@@ -188,7 +188,7 @@ namespace System.CodeDom.Compiler.Tests
         }
 
         [Fact]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework throws a NullReferenceException")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework throws a NullReferenceException")]
         public void CreateValidIdentifier_NullValue_ThrowsArgumentNullException()
         {
             ICodeGenerator generator = GetGenerator();
@@ -284,7 +284,7 @@ namespace System.CodeDom.Compiler.Tests
 
         [Theory]
         [MemberData(nameof(IsValidIdentifier_TestData))]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework is missing some newer keywords")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework is missing some newer keywords")]
         public void IsValidIdentifier_Invoke_ReturnsExpected(string value, bool expected)
         {
             ICodeGenerator generator = GetGenerator();
@@ -696,7 +696,7 @@ namespace System.CodeDom.Compiler.Tests
 
         [Theory]
         [MemberData(nameof(GenerateCodeFromExpression_TestData))]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework has different brace semantics.")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework has different brace semantics.")]
         public void GenerateCodeFromExpression_Invoke_Success(CodeExpression e, CodeGeneratorOptions o, string expected)
         {
             ICodeGenerator generator = GetGenerator();
@@ -798,7 +798,7 @@ namespace System.CodeDom.Compiler.Tests
         }
 
         [Fact]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework throws a NullReferenceException")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework throws a NullReferenceException")]
         public void GenerateCodeFromExpression_NullWriter_ThrowsArgumentNullException()
         {
             ICodeGenerator generator = GetGenerator();
@@ -1308,7 +1308,7 @@ namespace System.CodeDom.Compiler.Tests
 
         [Theory]
         [MemberData(nameof(GenerateCodeFromStatement_TestData))]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework has different string breakup handling")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework has different string breakup handling")]
         public void GenerateCodeFromStatement_Invoke_Success(CodeStatement e, CodeGeneratorOptions o, string expected)
         {
             ICodeGenerator generator = GetGenerator();
@@ -1342,7 +1342,7 @@ namespace System.CodeDom.Compiler.Tests
 
         [Theory]
         [MemberData(nameof(GenerateCodeFromStatement_NullE_TestData))]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework throws a NullReferenceException")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework throws a NullReferenceException")]
         public void GenerateCodeFromStatement_NullE_ThrowsArgumentNullException(CodeStatement e)
         {
             ICodeGenerator generator = GetGenerator();
@@ -1415,7 +1415,7 @@ namespace System.CodeDom.Compiler.Tests
         }
 
         [Fact]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework throws a NullReferenceException")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework throws a NullReferenceException")]
         public void GenerateCodeFromStatement_NullWriter_ThrowsArgumentNullException()
         {
             ICodeGenerator generator = GetGenerator();
@@ -2573,7 +2573,7 @@ public class name<, name, [attribute()]  name, name, name, [()] [name1()] [name2
 
         [Theory]
         [MemberData(nameof(GenerateCodeFromType_TestData))]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework has different brace semantics.")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework has different brace semantics.")]
         public void GenerateCodeFromType_Invoke_Success(CodeTypeDeclaration e, CodeGeneratorOptions o, string expected)
         {
             ICodeGenerator generator = GetGenerator();
@@ -2610,7 +2610,7 @@ public class name<, name, [attribute()]  name, name, name, [()] [name1()] [name2
         }
 
         [Fact]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework throws a NullReferenceException")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework throws a NullReferenceException")]
         public void GenerateCodeFromType_NullE_ThrowsArgumentNullException()
         {
             ICodeGenerator generator = GetGenerator();
@@ -2645,7 +2645,7 @@ public class name<, name, [attribute()]  name, name, name, [()] [name1()] [name2
         }
 
         [Fact]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework throws a NullReferenceException")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework throws a NullReferenceException")]
         public void GenerateCodeFromType_NullWriter_ThrowsArgumentNullException()
         {
             ICodeGenerator generator = GetGenerator();
@@ -2654,7 +2654,7 @@ public class name<, name, [attribute()]  name, name, name, [()] [name1()] [name2
         }
 
         [Fact]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework has different validation semantics.")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework has different validation semantics.")]
         public void GenerateCodeFromType_InvokeAlreadyGenerating_ThrowsInvalidOperationException()
         {
             ICodeGenerator generator = GetGenerator();
@@ -2702,7 +2702,7 @@ public class name<, name, [attribute()]  name, name, name, [()] [name1()] [name2
 
         [Theory]
         [MemberData(nameof(Validate_Invalid_TestData))]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework is missing some newer keywords")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework is missing some newer keywords")]
         public void ValidateIdentifier_InvokeInvalid_ThrowsArgumentException(string value)
         {
             ICodeGenerator generator = GetGenerator();
@@ -2710,7 +2710,7 @@ public class name<, name, [attribute()]  name, name, name, [()] [name1()] [name2
         }
 
         [Fact]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework has different string breakup handling")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework has different string breakup handling")]
         public void LineBreaksShouldPreserveTheWholeStringAsOneValue()
         {
             CodeStatement e = new CodeAssignStatement(

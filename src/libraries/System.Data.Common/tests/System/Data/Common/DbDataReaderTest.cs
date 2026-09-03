@@ -53,7 +53,7 @@ namespace System.Data.Common.Tests
             testData.Columns.Add("dbnull_col", typeof(object));
 
             var values = new object[14];
-            values[0] = ".NET";
+            values[0] = "CodeNet";
             values[1] = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF };
             values[2] = true;
             values[3] = 0x00;
@@ -172,7 +172,7 @@ namespace System.Data.Common.Tests
             Assert.True(_dataReader.Read());
             textReader = _dataReader.GetTextReader(testColOrdinal);
             txt = textReader.ReadToEnd();
-            Assert.Equal(".NET", txt);
+            Assert.Equal("CodeNet", txt);
 
             Assert.False(_dataReader.Read());
         }
@@ -431,7 +431,7 @@ namespace System.Data.Common.Tests
         {
             SkipRows(3);
 
-            var expected = ".NET";
+            var expected = "CodeNet";
 
             // The row after rowsToSkip
             _dataReader.Read();
@@ -447,7 +447,7 @@ namespace System.Data.Common.Tests
         {
             SkipRows(3);
 
-            var expected = ".NET";
+            var expected = "CodeNet";
 
             // The row after rowsToSkip
             _dataReader.Read();
@@ -465,7 +465,7 @@ namespace System.Data.Common.Tests
         {
             SkipRows(3);
 
-            var expected = ".NET";
+            var expected = "CodeNet";
 
             // The row after rowsToSkip
             _dataReader.Read();

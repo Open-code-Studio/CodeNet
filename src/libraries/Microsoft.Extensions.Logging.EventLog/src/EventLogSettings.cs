@@ -16,7 +16,7 @@ namespace Microsoft.Extensions.Logging.EventLog
         public string? LogName { get; set; }
 
         /// <summary>
-        /// Gets or sets the name of the event log source. If <see langword="null" /> or not specified, ".NET Runtime" is the default.
+        /// Gets or sets the name of the event log source. If <see langword="null" /> or not specified, "CodeNet Runtime" is the default.
         /// </summary>
         public string? SourceName { get; set; }
 
@@ -42,12 +42,12 @@ namespace Microsoft.Extensions.Logging.EventLog
         {
             string logName = string.IsNullOrEmpty(LogName) ? "Application" : LogName;
             string machineName = string.IsNullOrEmpty(MachineName) ? "." : MachineName;
-            string sourceName = string.IsNullOrEmpty(SourceName) ? ".NET Runtime" : SourceName;
+            string sourceName = string.IsNullOrEmpty(SourceName) ? "CodeNet Runtime" : SourceName;
             int? defaultEventId = null;
 
             if (string.IsNullOrEmpty(SourceName))
             {
-                sourceName = ".NET Runtime";
+                sourceName = "CodeNet Runtime";
                 defaultEventId = 1000;
             }
 

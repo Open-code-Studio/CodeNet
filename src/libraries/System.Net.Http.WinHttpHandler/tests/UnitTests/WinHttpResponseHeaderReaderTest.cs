@@ -103,7 +103,7 @@ namespace System.Net.Http.WinHttpHandlerUnitTests
                 {
                     CreateHeader("Content-Length", "50"),
                     CreateHeader("Content-Encoding", "gzip"),
-                    CreateHeader("X-Powered-By", ".NET")
+                    CreateHeader("X-Powered-By", "CodeNet")
                 }
             },
 
@@ -116,7 +116,7 @@ namespace System.Net.Http.WinHttpHandlerUnitTests
                 new[]
                 {
                     CreateHeader("Content-Length", "50"),
-                    CreateHeader("X-Powered-By", ".NET")
+                    CreateHeader("X-Powered-By", "CodeNet")
                 }
             },
 
@@ -129,7 +129,7 @@ namespace System.Net.Http.WinHttpHandlerUnitTests
                 new[]
                 {
                     CreateHeader("Content-Length", "50"),
-                    CreateHeader("X-Powered-By", ".NET")
+                    CreateHeader("X-Powered-By", "CodeNet")
                 }
             },
 
@@ -141,7 +141,7 @@ namespace System.Net.Http.WinHttpHandlerUnitTests
                 new[]
                 {
                     CreateHeader("Content-Length", "50"),
-                    CreateHeader("X-Powered-By", ".NET")
+                    CreateHeader("X-Powered-By", "CodeNet")
                 }
             },
 
@@ -155,7 +155,7 @@ namespace System.Net.Http.WinHttpHandlerUnitTests
                 {
                     CreateHeader("Content-Length", "50"),
                     CreateHeader("Content-Encoding", "deflate"),
-                    CreateHeader("X-Powered-By", ".NET")
+                    CreateHeader("X-Powered-By", "CodeNet")
                 }
             },
 
@@ -169,7 +169,7 @@ namespace System.Net.Http.WinHttpHandlerUnitTests
                 {
                     CreateHeader("Content-Length", "50"),
                     CreateHeader("Content-Encoding", "brotli"),
-                    CreateHeader("X-Powered-By", ".NET")
+                    CreateHeader("X-Powered-By", "CodeNet")
                 }
             }
         };

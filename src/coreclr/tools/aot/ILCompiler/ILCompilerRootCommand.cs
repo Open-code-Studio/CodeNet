@@ -186,7 +186,7 @@ namespace ILCompiler
         public ParseResult Result;
         public static bool IsArmel { get; private set; }
 
-        public ILCompilerRootCommand(string[] args) : base(".NET Native IL Compiler")
+        public ILCompilerRootCommand(string[] args) : base("CodeNet Native IL Compiler")
         {
             Arguments.Add(InputFilePaths);
             Options.Add(ReferenceFiles);

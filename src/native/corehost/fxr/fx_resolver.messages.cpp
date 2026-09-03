@@ -107,7 +107,7 @@ void fx_resolver_t::display_missing_framework_error(
         trace::error(_X("Framework: '%s', (%s)"), fx_name.c_str(), get_current_arch_name());
     }
 
-    trace::error(_X(".NET location: %s\n"), dotnet_root.c_str());
+    trace::error(_X("CodeNet location: %s\n"), dotnet_root.c_str());
 
     std::vector<framework_info> framework_infos;
     framework_info::get_all_framework_infos(dotnet_root, fx_name.c_str(), disable_multilevel_lookup, /*include_disabled_versions*/ true, &framework_infos);

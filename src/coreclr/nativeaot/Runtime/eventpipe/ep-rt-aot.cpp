@@ -432,7 +432,7 @@ ep_rt_aot_get_last_error (void)
 
 void ep_rt_aot_set_server_name (void)
 {
-    PalSetCurrentThreadName(".NET EventPipe");
+    PalSetCurrentThreadName("CodeNet EventPipe");
 }
 
 bool

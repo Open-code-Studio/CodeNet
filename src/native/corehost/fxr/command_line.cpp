@@ -294,14 +294,14 @@ void command_line::print_muxer_info(const pal::string_t &dotnet_root, const sdk_
         trace::println(_X("  RID:          %s"), get_runtime_id().c_str());
 
     trace::println(_X("\n")
-        _X(".NET SDKs installed:"));
+        _X("CodeNet SDKs installed:"));
     if (!sdk_info::print_all_sdks(dotnet_root, _X("  ")))
     {
         trace::println(_X("  No SDKs were found."));
     }
 
     trace::println(_X("\n")
-        _X(".NET runtimes installed:"));
+        _X("CodeNet runtimes installed:"));
     if (!framework_info::print_all_frameworks(dotnet_root, _X("  ")))
     {
         trace::println(_X("  No runtimes were found."));

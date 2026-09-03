@@ -471,7 +471,7 @@ namespace System.Net
                 new Thread(new ThreadStart(ThreadProc))
                 {
                     IsBackground = true,
-                    Name = ".NET Network Timer"
+                    Name = "CodeNet Network Timer"
                 }.Start();
             }
         }

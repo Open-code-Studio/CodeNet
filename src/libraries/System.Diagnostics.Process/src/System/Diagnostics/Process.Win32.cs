@@ -172,7 +172,7 @@ namespace System.Diagnostics
                     Thread executionThread = new Thread(threadStart)
                     {
                         IsBackground = true,
-                        Name = ".NET Process STA"
+                        Name = "CodeNet Process STA"
                     };
                     executionThread.SetApartmentState(ApartmentState.STA);
                     executionThread.Start();

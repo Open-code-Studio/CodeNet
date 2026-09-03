@@ -1028,7 +1028,7 @@ inline
 void
 ep_rt_set_server_name(void)
 {
-	mono_native_thread_set_name(mono_native_thread_id_get(), ".NET EventPipe");
+	mono_native_thread_set_name(mono_native_thread_id_get(), "CodeNet EventPipe");
 }
 
 static

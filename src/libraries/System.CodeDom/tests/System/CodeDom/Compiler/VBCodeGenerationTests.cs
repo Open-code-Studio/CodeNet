@@ -417,7 +417,7 @@ namespace System.CodeDom.Compiler.Tests
                   End Namespace");
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework outputs C# keywords rather than type names")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework outputs C# keywords rather than type names")]
         [Theory]
         [InlineData(typeof(byte), "Sub System_[Byte]_MyMethod() Implements Byte.MyMethod End Sub")]
         [InlineData(typeof(short), "Sub System_Int16_MyMethod() Implements Short.MyMethod End Sub")]

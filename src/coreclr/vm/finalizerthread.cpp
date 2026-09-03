@@ -578,7 +578,7 @@ void FinalizerThread::FinalizerThreadCreate()
     // actual thread terminates.
     GetFinalizerThread()->IncExternalCount();
 
-    if (GetFinalizerThread()->CreateNewThread(0, &FinalizerThreadStart, NULL, W(".NET Finalizer")) )
+    if (GetFinalizerThread()->CreateNewThread(0, &FinalizerThreadStart, NULL, W("CodeNet Finalizer")) )
     {
         DWORD dwRet = GetFinalizerThread()->StartThread();
 

@@ -67,7 +67,7 @@ namespace System.ServiceProcess.Tests
         }
 
         [Fact]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework does not throw")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework does not throw")]
         public static void Initialize_GetNames()
         {
             Assert.Throws<InvalidOperationException>(() => new ServiceController().ServiceName);

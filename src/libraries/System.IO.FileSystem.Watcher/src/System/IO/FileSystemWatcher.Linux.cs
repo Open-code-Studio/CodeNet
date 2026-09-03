@@ -315,7 +315,7 @@ namespace System.IO
                 new Thread(obj => ((RunningInstance)obj!).ProcessEvents())
                 {
                     IsBackground = true,
-                    Name = ".NET File Watcher"
+                    Name = "CodeNet File Watcher"
                 }.Start(this);
 
                 // PERF: As needed, we can look into making this use async I/O rather than burning

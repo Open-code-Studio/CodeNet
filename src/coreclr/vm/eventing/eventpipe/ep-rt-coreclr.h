@@ -922,7 +922,7 @@ inline
 void
 ep_rt_set_server_name(void)
 {
-	::SetThreadName(GetCurrentThread(), W(".NET EventPipe"));
+	::SetThreadName(GetCurrentThread(), W("CodeNet EventPipe"));
 }
 
 static

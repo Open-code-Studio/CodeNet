@@ -48,7 +48,7 @@ namespace System.Threading.Tasks
                 new Thread(s_longRunningThreadWork)
                 {
                     IsBackground = true,
-                    Name = ".NET Long Running Task"
+                    Name = "CodeNet Long Running Task"
                 }.UnsafeStart(task);
             }
             else

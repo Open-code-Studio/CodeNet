@@ -95,7 +95,7 @@ FILE* OpenOutput(_In_ __nullterminated const char* szFileName);
 
 void PrintLogo()
 {
-    printf(".NET IL Disassembler.  Version " CLR_PRODUCT_VERSION);
+    printf(CodeNet IL Disassembler.  Version  CLR_PRODUCT_VERSION);
     printf("\n%s\n\n", VER_LEGALCOPYRIGHT_LOGO_STR);
 }
 

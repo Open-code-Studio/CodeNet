@@ -317,7 +317,7 @@ static void* SignalHandlerLoop(void* arg)
     assert(pipeFd >= 0);
 
     // set thread name
-    int setNameResult = minipal_set_thread_name(pthread_self(), ".NET SigHandler");
+    int setNameResult = minipal_set_thread_name(pthread_self(), "CodeNet SigHandler");
     (void)setNameResult; // used
     assert(setNameResult == 0);
 

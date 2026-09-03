@@ -167,7 +167,7 @@ namespace System.Diagnostics.Tracing
                     s_pollingThread = new Thread(PollForValues)
                     {
                         IsBackground = true,
-                        Name = ".NET Counter Poller"
+                        Name = "CodeNet Counter Poller"
                     };
                     s_pollingThread.Start();
                 }

@@ -15,7 +15,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 #endif // !TARGET_UNIX
 
-#define FX_VER_FILEDESCRIPTION_STR ".NET IL Disassembler"
+#define FX_VER_FILEDESCRIPTION_STR "CodeNet IL Disassembler"
 
 #include <fxver.h>
 #include <fxver.rc>

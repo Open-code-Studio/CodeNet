@@ -83,7 +83,7 @@ class Program
             String source = entry.Source;
             String message = entry.Message;
 
-            if (source.Contains(".NET Runtime"))
+            if (source.Contains("CodeNet Runtime"))
             {
                 Console.WriteLine("***      Event Log       ***");
                 Console.WriteLine(message);

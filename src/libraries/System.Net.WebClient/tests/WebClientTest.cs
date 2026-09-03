@@ -427,7 +427,7 @@ namespace System.Net.Tests
             wc.Headers["Accept"] = "text/html";
             wc.Headers["ContentType"] = "text/html; charset=utf-8";
             wc.Headers["Referer"] = "http://localhost";
-            wc.Headers["User-Agent"] = ".NET";
+            wc.Headers["User-Agent"] = "CodeNet";
 
             await LoopbackServer.CreateServerAsync(async (server, url) =>
             {

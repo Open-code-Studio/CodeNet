@@ -382,7 +382,7 @@ ghi,789");
         public void ReadFields_PartialReadsFromStream_Large(bool fieldsInQuotes) =>
             ReadFields_PartialReadsFromStream(fieldsInQuotes, 1023);
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework doesn't properly handle streams frequently returning much less than requested")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework doesn't properly handle streams frequently returning much less than requested")]
         [Theory]
         [InlineData(false)]
         [InlineData(true)]

@@ -39,7 +39,7 @@ namespace
     void write_errors_to_event_log(const pal::char_t *executable_path, const pal::char_t *executable_name)
     {
         // Report errors to the Windows Event Log.
-        auto eventSource = ::RegisterEventSourceW(nullptr, _X(".NET Runtime"));
+        auto eventSource = ::RegisterEventSourceW(nullptr, _X("CodeNet Runtime"));
         const DWORD traceErrorID = 1023; // Matches CoreCLR ERT_UnmanagedFailFast
         pal::string_t message;
         message.append(_X("Description: A .NET application failed.\n"));

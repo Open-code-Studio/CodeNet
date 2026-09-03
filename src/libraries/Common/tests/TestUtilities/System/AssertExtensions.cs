@@ -17,7 +17,7 @@ namespace System
 {
     public static class AssertExtensions
     {
-        private static bool IsNetFramework => RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework");
+        private static bool IsNetFramework => RuntimeInformation.FrameworkDescription.StartsWith("CodeNet Framework");
 
 
         /// <summary>

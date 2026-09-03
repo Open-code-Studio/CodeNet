@@ -145,7 +145,7 @@ namespace System
 
             if (_description.Length > 0)
             {
-                ClrReportEvent(".NET Runtime",
+                ClrReportEvent("CodeNet Runtime",
                        1 /* EVENTLOG_ERROR_TYPE */,
                        0,
                        eventID,

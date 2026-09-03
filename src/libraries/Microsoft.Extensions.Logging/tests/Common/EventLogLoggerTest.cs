@@ -77,7 +77,7 @@ namespace Microsoft.Extensions.Logging
             // Assert
             var windowsEventLog = Assert.IsType<WindowsEventLog>(eventLogLogger.EventLog);
             Assert.Equal("Application", windowsEventLog.DiagnosticsEventLog.Log);
-            Assert.Equal(".NET Runtime", windowsEventLog.DiagnosticsEventLog.Source);
+            Assert.Equal("CodeNet Runtime", windowsEventLog.DiagnosticsEventLog.Source);
             Assert.Equal(".", windowsEventLog.DiagnosticsEventLog.MachineName);
         }
 

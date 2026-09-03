@@ -187,7 +187,7 @@ namespace System.Threading
                 {
                     IsThreadPoolThread = true,
                     IsBackground = true,
-                    Name = ".NET TP Wait"
+                    Name = "CodeNet TP Wait"
                 };
                 waitThread.UnsafeStart();
             }

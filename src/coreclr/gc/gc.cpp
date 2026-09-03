@@ -7083,7 +7083,7 @@ void set_thread_affinity_for_heap (int heap_number, uint16_t proc_no)
 bool gc_heap::create_gc_thread ()
 {
     dprintf (3, ("Creating gc thread\n"));
-    return GCToEEInterface::CreateThread(gc_thread_stub, this, false, ".NET Server GC");
+    return GCToEEInterface::CreateThread(gc_thread_stub, this, false, "CodeNet Server GC");
 }
 
 #ifdef _MSC_VER
@@ -40049,7 +40049,7 @@ BOOL gc_heap::create_bgc_thread(gc_heap* gh)
 
     //dprintf (2, ("Creating BGC thread"));
 
-    gh->bgc_thread_running = GCToEEInterface::CreateThread(gh->bgc_thread_stub, gh, true, ".NET BGC");
+    gh->bgc_thread_running = GCToEEInterface::CreateThread(gh->bgc_thread_stub, gh, true, "CodeNet BGC");
     return gh->bgc_thread_running;
 }
 

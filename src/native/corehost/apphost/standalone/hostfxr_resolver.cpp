@@ -107,7 +107,7 @@ hostfxr_resolver_t::hostfxr_resolver_t(const pal::string_t& app_root)
         return;
     }
 
-    trace::info(_X(".NET root search location options: %d"), search_location);
+    trace::info(_X("CodeNet root search location options: %d"), search_location);
     if (!app_relative_dotnet.empty())
     {
         app_relative_dotnet_path = app_root;

@@ -182,7 +182,7 @@ namespace System.Runtime.InteropServices.RuntimeInformationTests
         [Fact]
         public void VerifyRuntimeNameOnNetCoreApp()
         {
-            Assert.True(RuntimeInformation.FrameworkDescription.StartsWith(".NET"), RuntimeInformation.FrameworkDescription);
+            Assert.True(RuntimeInformation.FrameworkDescription.StartsWith("CodeNet"), RuntimeInformation.FrameworkDescription);
             Assert.Same(RuntimeInformation.FrameworkDescription, RuntimeInformation.FrameworkDescription);
         }
 
@@ -190,7 +190,7 @@ namespace System.Runtime.InteropServices.RuntimeInformationTests
         public void VerifyFrameworkDescriptionContainsCorrectVersion()
         {
             var frameworkDescription = RuntimeInformation.FrameworkDescription;
-            var version = frameworkDescription.Substring(".NET".Length).Trim(); // remove ".NET" prefix
+            var version = frameworkDescription.Substring("CodeNet".Length).Trim(); // remove "CodeNet" prefix
 
             if (string.IsNullOrEmpty(version))
                 return;

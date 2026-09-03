@@ -33,7 +33,7 @@ public class Test_445488
     {
         List<byte[]> list = new List<byte[]>();
         List<GCHandle> glist = new List<GCHandle>();
-        //PC = new PerformanceCounter(".NET CLR Memory", "Gen 0 heap size", "445488", ".");
+        //PC = new PerformanceCounter("CodeNet CLR Memory", "Gen 0 heap size", "445488", ".");
         long count =0;
 
         while (count <= 124979200)

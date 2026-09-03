@@ -203,7 +203,7 @@ namespace System.Net.Sockets
                 var thread = new Thread(static s => ((SocketAsyncEngine)s!).EventLoop())
                 {
                     IsBackground = true,
-                    Name = ".NET Sockets"
+                    Name = "CodeNet Sockets"
                 };
                 thread.UnsafeStart(this);
             }

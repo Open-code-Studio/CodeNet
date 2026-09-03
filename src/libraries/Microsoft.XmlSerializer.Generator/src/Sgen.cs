@@ -489,7 +489,7 @@ namespace Microsoft.XmlSerializer.Generator
         private static void WriteHeader()
         {
             // do not localize Copyright header
-            Console.WriteLine($".NET Xml Serialization Generation Utility, Version {ThisAssembly.InformationalVersion}]");
+            Console.WriteLine($"CodeNet Xml Serialization Generation Utility, Version {ThisAssembly.InformationalVersion}]");
         }
 
         private void WriteHelp()

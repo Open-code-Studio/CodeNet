@@ -30,7 +30,7 @@
     _X("App: %s\n")                             \
     _X("Architecture: %s\n")                    \
     _X("App host version: %s\n")                \
-    _X(".NET location: %s\n")                   \
+    _X("CodeNet location: %s\n")                   \
     _X("\n")                                    \
     DOC_LINK_INTRO _X("\n")                     \
     DOTNET_APP_LAUNCH_FAILED_URL                \

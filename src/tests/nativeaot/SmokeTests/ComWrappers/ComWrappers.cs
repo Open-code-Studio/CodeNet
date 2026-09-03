@@ -94,12 +94,12 @@ namespace ComWrappersTests
             WeakReference comPointerHolder = CreateComReference();
 
             GC.Collect();
-            ThrowIfNotEquals(true, comPointerHolder.IsAlive, ".NET object should be alive");
+            ThrowIfNotEquals(true, comPointerHolder.IsAlive, "CodeNet object should be alive");
 
             ReleaseComPointer();
 
             GC.Collect();
-            ThrowIfNotEquals(false, comPointerHolder.IsAlive, ".NET object should be disposed by then");
+            ThrowIfNotEquals(false, comPointerHolder.IsAlive, "CodeNet object should be disposed by then");
         }
 
         public static void TestRCWRoundTripRequireUnwrap()

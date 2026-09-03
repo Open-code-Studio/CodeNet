@@ -113,13 +113,13 @@ static int UtilMessageBoxNonLocalized(
 #if !defined(FEATURE_UTILCODE_NO_DEPENDENCIES)
 #ifdef HOST_UNIX
         StackSString message;
-        message.Append(W(".NET Runtime version : "));
+        message.Append(W("CodeNet Runtime version : "));
         message.Append(CLR_PRODUCT_VERSION_L);
         message.Append(W(" - "));
         message.Append(lpTitle);
         message.Append(lpText);
 
-        ClrReportEvent(W(".NET Runtime"),
+        ClrReportEvent(W("CodeNet Runtime"),
             EVENTLOG_ERROR_TYPE,    // event type
             0,                      // category zero
             1024,                   // event identifier

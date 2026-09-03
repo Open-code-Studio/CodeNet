@@ -1312,7 +1312,7 @@ LExit:
 
     DebuggerRCThread* t = (DebuggerRCThread*)g_pRCThread;
 
-    if (FAILED(SetThreadName(t->m_thread, W(".NET Debugger"))))
+    if (FAILED(SetThreadName(t->m_thread, W("CodeNet Debugger"))))
     {
         LOG((LF_CORDB, LL_INFO10000, "DebuggerRCThread name set failed\n"));
     }

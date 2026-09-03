@@ -447,7 +447,7 @@ namespace System.Collections.Tests
 
         [Theory]
         [MemberData(nameof(ValidCollectionSizes))]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework throws InvalidOperationException")]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, "CodeNet Framework throws InvalidOperationException")]
         public void ISet_Generic_IntersectWith_Itself(int setLength)
         {
             if (!IsReadOnly)

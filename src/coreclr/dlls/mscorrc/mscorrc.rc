@@ -13,7 +13,7 @@
 #include <winresrc.h>
 
 #ifndef FX_VER_FILEDESCRIPTION_STR
-#define FX_VER_FILEDESCRIPTION_STR ".NET Runtime resources"
+#define FX_VER_FILEDESCRIPTION_STR "CodeNet Runtime resources"
 #endif
 
 #include <fxver.h>
@@ -234,7 +234,7 @@ BEGIN
     IDS_EE_BADMARSHAL_PTR                   "Invalid managed/unmanaged type combination (pointers must not have a MarshalAs attribute set)."
     IDS_EE_BADMARSHAL_NOLAYOUT              "The type definition of this type has no layout information."
     IDS_EE_BADMARSHAL_DELEGATE              "Invalid managed/unmanaged type combination (Delegates must be paired with FunctionPtr or IDispatch)."
-    IDS_EE_BADMARSHAL_DELEGATE_TLB_INTERFACE ".NET Core does not support marshalling delegates to the _Delegate interface provided by the .NET Framework COM Type Library. To marshal a delegate as an interface, marshal it as an IDispatch pointer."
+    IDS_EE_BADMARSHAL_DELEGATE_TLB_INTERFACE "CodeNet does not support marshalling delegates to the _Delegate interface provided by the CodeNet Framework COM Type Library. To marshal a delegate as an interface, marshal it as an IDispatch pointer."
     IDS_EE_BADMARSHAL_FNPTR                 "Invalid managed/unmanaged type combination (function pointers must be paired with FunctionPtr)."
     IDS_EE_BADMARSHAL_INTERFACE             "Invalid managed/unmanaged type combination (Interfaces must be paired with Interface)."
     IDS_EE_BADMARSHAL_CLASS                 "Invalid managed/unmanaged type combination (this type must be paired with LPStruct or Interface)."

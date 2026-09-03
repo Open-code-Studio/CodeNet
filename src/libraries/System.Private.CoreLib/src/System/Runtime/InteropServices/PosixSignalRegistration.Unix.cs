@@ -107,7 +107,7 @@ namespace System.Runtime.InteropServices
                     new Thread(HandleSignal)
                     {
                         IsBackground = true,
-                        Name = ".NET Signal Handler"
+                        Name = "CodeNet Signal Handler"
                     }.UnsafeStart((signo, tokens));
                     break;
 

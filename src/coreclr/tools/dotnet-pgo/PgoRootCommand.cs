@@ -95,7 +95,7 @@ namespace Microsoft.Diagnostics.Tools.Pgo
             diagnostic
         }
 
-        public PgoRootCommand(string[] args) : base(".NET PGO Tool")
+        public PgoRootCommand(string[] args) : base("CodeNet PGO Tool")
         {
             Command createMbicCommand = new("create-mibc", "Transform a trace file into a Mibc profile data file")
             {

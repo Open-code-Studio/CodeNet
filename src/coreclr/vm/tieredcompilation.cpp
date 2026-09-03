@@ -413,7 +413,7 @@ void TieredCompilationManager::CreateBackgroundWorker()
     #endif
         newThread->SetBackground(true);
 
-        if (!newThread->CreateNewThread(0, BackgroundWorkerBootstrapper0, newThread, W(".NET Tiered Compilation Worker")))
+        if (!newThread->CreateNewThread(0, BackgroundWorkerBootstrapper0, newThread, W("CodeNet Tiered Compilation Worker")))
         {
             newThread->DecExternalCount(false);
             ThrowOutOfMemory();

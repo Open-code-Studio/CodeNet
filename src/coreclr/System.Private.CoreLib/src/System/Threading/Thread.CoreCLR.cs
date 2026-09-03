@@ -475,7 +475,7 @@ namespace System.Threading
 
             _mayNeedResetForThreadPool = false;
 
-            const string FinalizerThreadName = ".NET Finalizer";
+            const string FinalizerThreadName = "CodeNet Finalizer";
 
             if (Name != FinalizerThreadName)
             {

@@ -55,7 +55,7 @@ uint32_t WINAPI FinalizerStart(void* pContext)
 
     HANDLE hFinalizerEvent = (HANDLE)pContext;
 
-    PalSetCurrentThreadName(".NET Finalizer");
+    PalSetCurrentThreadName("CodeNet Finalizer");
 
     ThreadStore::AttachCurrentThread();
     Thread * pThread = ThreadStore::GetCurrentThread();
