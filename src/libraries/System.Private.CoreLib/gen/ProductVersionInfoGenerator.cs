@@ -52,7 +52,7 @@ namespace System.Runtime.InteropServices
         /// <summary>
         /// Gets the name of the .NET installation on which an app is running.
         /// </summary>
-        public static string FrameworkDescription => "CodeNet {frameworkDescriptionVersion}";
+        public static string FrameworkDescription => ""CodeNet {frameworkDescriptionVersion}"";
     }}
 }}");
             });
