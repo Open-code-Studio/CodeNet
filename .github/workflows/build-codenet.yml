@@ -54,11 +54,20 @@ jobs:
             /p:TargetArchitecture=${{ matrix.arch }} \
             /p:Configuration=Release
 
+      - name: Verify build output
+        run: |
+          if [ ! -d "artifacts/bin/Release/osx-${{ matrix.arch }}" ]; then
+            echo "Build output not found in expected location"
+            echo "Contents of artifacts/bin:"
+            find artifacts/bin -type d -maxdepth 3 || echo "artifacts/bin does not exist"
+            exit 1
+          fi
+
       - name: Package Runtime
         run: |
           mkdir -p artifacts/package
           tar czf artifacts/package/dotnet-runtime-osx-${{ matrix.arch }}.tar.gz \
-            -C artifacts/bin/runtime/Release/net10.0/osx-${{ matrix.arch }} .
+            -C artifacts/bin/Release/osx-${{ matrix.arch }} .
 
       - uses: actions/upload-artifact@v4
         with:
@@ -88,11 +97,18 @@ jobs:
             /p:TargetArchitecture=${{ matrix.arch }} \
             /p:Configuration=Release
 
+      - name: Verify build output
+        run: |
+          if [ ! -d "artifacts/bin/Release/linux-${{ matrix.arch }}" ]; then
+            echo "Build output not found in expected location"
+            exit 1
+          fi
+
       - name: Package Runtime
         run: |
           mkdir -p artifacts/package
           tar czf artifacts/package/dotnet-runtime-linux-${{ matrix.arch }}.tar.gz \
-            -C artifacts/bin/runtime/Release/net10.0/linux-${{ matrix.arch }} .
+            -C artifacts/bin/Release/linux-${{ matrix.arch }} .
 
       - uses: actions/upload-artifact@v4
         with:
@@ -120,10 +136,17 @@ jobs:
             /p:TargetArchitecture=${{ matrix.arch }} `
             /p:Configuration=Release
 
+      - name: Verify build output
+        run: |
+          if (-not (Test-Path "artifacts\bin\Release\win-${{ matrix.arch }}")) {
+            Write-Host "Build output not found in expected location"
+            exit 1
+          }
+
       - name: Package Runtime
         run: |
           mkdir artifacts\package -Force
-          Compress-Archive -Path artifacts\bin\runtime\Release\net10.0\win-${{ matrix.arch }}\* `
+          Compress-Archive -Path artifacts\bin\Release\win-${{ matrix.arch }}\* `
             -DestinationPath artifacts\package\dotnet-runtime-win-${{ matrix.arch }}.zip
 
       - uses: actions/upload-artifact@v4
