@@ -36,9 +36,9 @@ jobs:
       matrix:
         arch: [arm64]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Install dependencies
         run: |
@@ -48,7 +48,6 @@ jobs:
         run: |
           ./build.sh -arch ${{ matrix.arch }} -os osx -c Release \
             --subset clr+libs \
-            --clean \
             --ninja \
             /p:TargetOS=osx \
             /p:TargetArchitecture=${{ matrix.arch }} \
@@ -56,18 +55,21 @@ jobs:
 
       - name: Verify build output
         run: |
-          if [ ! -d "artifacts/bin/Release/osx-${{ matrix.arch }}" ]; then
+          RUNTIME_DIR=$(find artifacts/bin/runtime/Release -maxdepth 2 -type d -name "osx-${{ matrix.arch }}" 2>/dev/null | head -1)
+          if [ -z "$RUNTIME_DIR" ]; then
             echo "Build output not found in expected location"
             echo "Contents of artifacts/bin:"
-            find artifacts/bin -type d -maxdepth 3 || echo "artifacts/bin does not exist"
+            find artifacts/bin -maxdepth 4 -type d 2>/dev/null || echo "artifacts/bin does not exist"
             exit 1
           fi
+          echo "Runtime output found at: $RUNTIME_DIR"
+          echo "RUNTIME_DIR=$RUNTIME_DIR" >> "$GITHUB_ENV"
 
       - name: Package Runtime
         run: |
           mkdir -p artifacts/package
           tar czf artifacts/package/dotnet-runtime-osx-${{ matrix.arch }}.tar.gz \
-            -C artifacts/bin/Release/osx-${{ matrix.arch }} .
+            -C "$RUNTIME_DIR" .
 
       - uses: actions/upload-artifact@v4
         with:
@@ -83,15 +85,14 @@ jobs:
       matrix:
         arch: [x64, arm64]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Build .NET Runtime for Linux ${{ matrix.arch }}
         run: |
           ./build.sh -arch ${{ matrix.arch }} -os linux -c Release \
             --subset clr+libs \
-            --clean \
             --ninja \
             /p:TargetOS=linux \
             /p:TargetArchitecture=${{ matrix.arch }} \
@@ -99,16 +100,18 @@ jobs:
 
       - name: Verify build output
         run: |
-          if [ ! -d "artifacts/bin/Release/linux-${{ matrix.arch }}" ]; then
+          RUNTIME_DIR=$(find artifacts/bin/runtime/Release -maxdepth 2 -type d -name "linux-${{ matrix.arch }}" 2>/dev/null | head -1)
+          if [ -z "$RUNTIME_DIR" ]; then
             echo "Build output not found in expected location"
             exit 1
           fi
+          echo "RUNTIME_DIR=$RUNTIME_DIR" >> "$GITHUB_ENV"
 
       - name: Package Runtime
         run: |
           mkdir -p artifacts/package
           tar czf artifacts/package/dotnet-runtime-linux-${{ matrix.arch }}.tar.gz \
-            -C artifacts/bin/Release/linux-${{ matrix.arch }} .
+            -C "$RUNTIME_DIR" .
 
       - uses: actions/upload-artifact@v4
         with:
@@ -124,29 +127,33 @@ jobs:
       matrix:
         arch: [x64, arm64]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Build .NET Runtime for Windows ${{ matrix.arch }}
         run: |
           .\build.cmd -arch ${{ matrix.arch }} -os win -c Release `
-            --subset clr+libs+packs `
+            --subset clr+libs `
             /p:TargetOS=win `
             /p:TargetArchitecture=${{ matrix.arch }} `
             /p:Configuration=Release
 
       - name: Verify build output
         run: |
-          if (-not (Test-Path "artifacts\bin\Release\win-${{ matrix.arch }}")) {
+          $runtimeDir = Get-Item "artifacts\bin\runtime\Release\*\win-${{ matrix.arch }}" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $runtimeDir) {
             Write-Host "Build output not found in expected location"
+            Get-ChildItem "artifacts\bin" -Recurse -Directory -Depth 4 | Select-Object -First 50
             exit 1
           }
+          Write-Host "Runtime output found at: $($runtimeDir.FullName)"
+          "RUNTIME_DIR=$($runtimeDir.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Package Runtime
         run: |
           mkdir artifacts\package -Force
-          Compress-Archive -Path artifacts\bin\Release\win-${{ matrix.arch }}\* `
+          Compress-Archive -Path "$env:RUNTIME_DIR\*" `
             -DestinationPath artifacts\package\dotnet-runtime-win-${{ matrix.arch }}.zip
 
       - uses: actions/upload-artifact@v4
