@@ -102,7 +102,7 @@ extern "C"
 
 #endif // __APPLE__
 
-#if defined(__HAIKU__) || defined(__APPLE__)
+#ifdef __HAIKU__
 #include <OS.h>
 #endif // __HAIKU__
 
