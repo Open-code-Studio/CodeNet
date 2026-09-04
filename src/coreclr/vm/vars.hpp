@@ -566,7 +566,13 @@ typedef DPTR(GSCookie) PTR_GSCookie;
 #define READONLY_ATTR
 #else
 #ifdef __APPLE__
-#define READONLY_ATTR_ARGS section("__DATA,__const")
+// macOS 27 (Golden Gate) makes __DATA_CONST pages strictly immutable
+// (max_prot == PROT_READ), so the runtime can no longer mprotect the GS cookie
+// writable during InitGSCookie(). That mprotect fails with EACCES and bubbles up
+// as coreclr_initialize 0x8007000c. Keep the cookie in the writable __DATA segment
+// instead. Apple's hardened runtime / PAC already protect it, so a writable page is
+// acceptable here.
+#define READONLY_ATTR_ARGS section("__DATA,__data")
 #else
 #define READONLY_ATTR_ARGS section(".rodata")
 #endif
