@@ -1,0 +1,7 @@
+// Licensed to the CodeNet Foundation under one or more agreements.
+// The CodeNet Foundation licenses this file to you under the MIT license.
+
+#define FX_VER_FILEDESCRIPTION_STR "CodeNet Runtime Crash Dump Generator"
+
+#include <fxver.h>
+#include <fxver.rc>
