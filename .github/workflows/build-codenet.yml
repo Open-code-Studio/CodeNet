@@ -27,6 +27,15 @@ on:
           - arm
 
 jobs:
+  # The `clr+libs` subset does not produce a single combined output directory.
+  # It produces two, and both are needed for a usable runtime:
+  #   1. artifacts/bin/coreclr/<OS>.<Arch>.<Config>
+  #      CoreCLR host + tools (corerun, libcoreclr.dylib, System.Private.CoreLib.dll, crossgen2, ...)
+  #      See docs/workflow/building/coreclr/README.md
+  #   2. artifacts/bin/runtime/<tfm>-<OS>-<Config>-<Arch>
+  #      All managed libraries (System.Runtime.dll, System.Collections.dll, ...)
+  #      See LibrariesAllBinArtifactsPath in eng/liveBuilds.targets
+  # The packaging step below merges both into one directory.
   build-macos:
     name: Build macOS (Apple Silicon)
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_os == 'osx' || github.event_name != 'workflow_dispatch' }}
@@ -55,21 +64,59 @@ jobs:
 
       - name: Verify build output
         run: |
-          RUNTIME_DIR=$(find artifacts/bin/runtime/Release -maxdepth 2 -type d -name "osx-${{ matrix.arch }}" 2>/dev/null | head -1)
-          if [ -z "$RUNTIME_DIR" ]; then
-            echo "Build output not found in expected location"
-            echo "Contents of artifacts/bin:"
-            find artifacts/bin -maxdepth 4 -type d 2>/dev/null || echo "artifacts/bin does not exist"
+          set -uo pipefail
+
+          OS_ID=osx
+          ARCH="${{ matrix.arch }}"
+          CORECLR_LIB="libcoreclr.dylib"
+          HOST_BIN="corerun"
+
+          CORECLR_DIR="artifacts/bin/coreclr/${OS_ID}.${ARCH}.Release"
+          LIBS_DIR="$(ls -d artifacts/bin/runtime/*-${OS_ID}-Release-${ARCH} 2>/dev/null | head -n 1)"
+
+          if [ ! -f "${CORECLR_DIR}/${CORECLR_LIB}" ] || [ ! -f "${CORECLR_DIR}/${HOST_BIN}" ]; then
+            echo "::error::CoreCLR output is incomplete: expected ${CORECLR_DIR}/{${CORECLR_LIB},${HOST_BIN}}"
+            echo "--- artifacts/bin/coreclr ---"
+            ls -la artifacts/bin/coreclr 2>/dev/null || echo "  (missing)"
+            echo "--- ${CORECLR_DIR} ---"
+            ls -la "${CORECLR_DIR}" 2>/dev/null || echo "  (missing)"
             exit 1
           fi
-          echo "Runtime output found at: $RUNTIME_DIR"
-          echo "RUNTIME_DIR=$RUNTIME_DIR" >> "$GITHUB_ENV"
+
+          echo "CoreCLR output    : ${CORECLR_DIR}"
+          echo "Managed libraries : ${LIBS_DIR:-<not found>}"
+
+          if [ -n "${LIBS_DIR}" ]; then
+            DLL_COUNT="$(find "${LIBS_DIR}" -maxdepth 1 -name '*.dll' | wc -l | tr -d ' ')"
+            echo "Managed assemblies: ${DLL_COUNT}"
+            if [ "${DLL_COUNT}" -lt 50 ]; then
+              echo "::warning::Only ${DLL_COUNT} assemblies in ${LIBS_DIR}; expected the full shared framework."
+            fi
+          else
+            echo "::warning::Managed libraries directory not found; artifact will contain CoreCLR only."
+          fi
+
+          {
+            echo "CORECLR_DIR=${CORECLR_DIR}"
+            echo "LIBS_DIR=${LIBS_DIR}"
+            echo "PACKAGE_DIR=artifacts/package/runtime"
+          } >> "$GITHUB_ENV"
 
       - name: Package Runtime
         run: |
-          mkdir -p artifacts/package
-          tar czf artifacts/package/dotnet-runtime-osx-${{ matrix.arch }}.tar.gz \
-            -C "$RUNTIME_DIR" .
+          set -euo pipefail
+
+          rm -rf "${PACKAGE_DIR}"
+          mkdir -p "${PACKAGE_DIR}"
+          cp -R "${CORECLR_DIR}/." "${PACKAGE_DIR}/"
+
+          if [ -n "${LIBS_DIR}" ] && [ -d "${LIBS_DIR}" ]; then
+            cp -R "${LIBS_DIR}/." "${PACKAGE_DIR}/"
+          fi
+
+          echo "Packaged $(find "${PACKAGE_DIR}" -type f | wc -l | tr -d ' ') files"
+          tar czf "artifacts/package/dotnet-runtime-osx-${{ matrix.arch }}.tar.gz" -C "${PACKAGE_DIR}" .
+          ls -lh artifacts/package/
 
       - uses: actions/upload-artifact@v4
         with:
@@ -100,18 +147,59 @@ jobs:
 
       - name: Verify build output
         run: |
-          RUNTIME_DIR=$(find artifacts/bin/runtime/Release -maxdepth 2 -type d -name "linux-${{ matrix.arch }}" 2>/dev/null | head -1)
-          if [ -z "$RUNTIME_DIR" ]; then
-            echo "Build output not found in expected location"
+          set -uo pipefail
+
+          OS_ID=linux
+          ARCH="${{ matrix.arch }}"
+          CORECLR_LIB="libcoreclr.so"
+          HOST_BIN="corerun"
+
+          CORECLR_DIR="artifacts/bin/coreclr/${OS_ID}.${ARCH}.Release"
+          LIBS_DIR="$(ls -d artifacts/bin/runtime/*-${OS_ID}-Release-${ARCH} 2>/dev/null | head -n 1)"
+
+          if [ ! -f "${CORECLR_DIR}/${CORECLR_LIB}" ] || [ ! -f "${CORECLR_DIR}/${HOST_BIN}" ]; then
+            echo "::error::CoreCLR output is incomplete: expected ${CORECLR_DIR}/{${CORECLR_LIB},${HOST_BIN}}"
+            echo "--- artifacts/bin/coreclr ---"
+            ls -la artifacts/bin/coreclr 2>/dev/null || echo "  (missing)"
+            echo "--- ${CORECLR_DIR} ---"
+            ls -la "${CORECLR_DIR}" 2>/dev/null || echo "  (missing)"
             exit 1
           fi
-          echo "RUNTIME_DIR=$RUNTIME_DIR" >> "$GITHUB_ENV"
+
+          echo "CoreCLR output    : ${CORECLR_DIR}"
+          echo "Managed libraries : ${LIBS_DIR:-<not found>}"
+
+          if [ -n "${LIBS_DIR}" ]; then
+            DLL_COUNT="$(find "${LIBS_DIR}" -maxdepth 1 -name '*.dll' | wc -l | tr -d ' ')"
+            echo "Managed assemblies: ${DLL_COUNT}"
+            if [ "${DLL_COUNT}" -lt 50 ]; then
+              echo "::warning::Only ${DLL_COUNT} assemblies in ${LIBS_DIR}; expected the full shared framework."
+            fi
+          else
+            echo "::warning::Managed libraries directory not found; artifact will contain CoreCLR only."
+          fi
+
+          {
+            echo "CORECLR_DIR=${CORECLR_DIR}"
+            echo "LIBS_DIR=${LIBS_DIR}"
+            echo "PACKAGE_DIR=artifacts/package/runtime"
+          } >> "$GITHUB_ENV"
 
       - name: Package Runtime
         run: |
-          mkdir -p artifacts/package
-          tar czf artifacts/package/dotnet-runtime-linux-${{ matrix.arch }}.tar.gz \
-            -C "$RUNTIME_DIR" .
+          set -euo pipefail
+
+          rm -rf "${PACKAGE_DIR}"
+          mkdir -p "${PACKAGE_DIR}"
+          cp -R "${CORECLR_DIR}/." "${PACKAGE_DIR}/"
+
+          if [ -n "${LIBS_DIR}" ] && [ -d "${LIBS_DIR}" ]; then
+            cp -R "${LIBS_DIR}/." "${PACKAGE_DIR}/"
+          fi
+
+          echo "Packaged $(find "${PACKAGE_DIR}" -type f | wc -l | tr -d ' ') files"
+          tar czf "artifacts/package/dotnet-runtime-linux-${{ matrix.arch }}.tar.gz" -C "${PACKAGE_DIR}" .
+          ls -lh artifacts/package/
 
       - uses: actions/upload-artifact@v4
         with:
@@ -140,21 +228,55 @@ jobs:
             /p:Configuration=Release
 
       - name: Verify build output
+        shell: pwsh
         run: |
-          $runtimeDir = Get-Item "artifacts\bin\runtime\Release\*\win-${{ matrix.arch }}" -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (-not $runtimeDir) {
-            Write-Host "Build output not found in expected location"
-            Get-ChildItem "artifacts\bin" -Recurse -Directory -Depth 4 | Select-Object -First 50
+          $coreclrDir = "artifacts\bin\coreclr\win.${{ matrix.arch }}.Release"
+          $libsDir = Get-ChildItem -Path "artifacts\bin\runtime" -Directory `
+            -Filter "*-win-Release-${{ matrix.arch }}" -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+
+          if (-not (Test-Path (Join-Path $coreclrDir "coreclr.dll")) -or
+              -not (Test-Path (Join-Path $coreclrDir "corerun.exe"))) {
+            Write-Host "::error::CoreCLR output is incomplete: expected $coreclrDir\{coreclr.dll,corerun.exe}"
+            if (Test-Path "artifacts\bin\coreclr") { Get-ChildItem "artifacts\bin\coreclr" }
+            if (Test-Path $coreclrDir) { Get-ChildItem $coreclrDir }
             exit 1
           }
-          Write-Host "Runtime output found at: $($runtimeDir.FullName)"
-          "RUNTIME_DIR=$($runtimeDir.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+          Write-Host "CoreCLR output    : $coreclrDir"
+          if ($libsDir) {
+            $dllCount = (Get-ChildItem -Path $libsDir.FullName -Filter "*.dll").Count
+            Write-Host "Managed libraries : $($libsDir.FullName)"
+            Write-Host "Managed assemblies: $dllCount"
+            if ($dllCount -lt 50) {
+              Write-Host "::warning::Only $dllCount assemblies in $($libsDir.FullName); expected the full shared framework."
+            }
+          } else {
+            Write-Host "::warning::Managed libraries directory not found; artifact will contain CoreCLR only."
+          }
+
+          @(
+            "CORECLR_DIR=$coreclrDir"
+            "LIBS_DIR=$($libsDir.FullName)"
+            "PACKAGE_DIR=artifacts\package\runtime"
+          ) | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Package Runtime
+        shell: pwsh
         run: |
-          mkdir artifacts\package -Force
-          Compress-Archive -Path "$env:RUNTIME_DIR\*" `
-            -DestinationPath artifacts\package\dotnet-runtime-win-${{ matrix.arch }}.zip
+          New-Item -ItemType Directory -Force -Path $env:PACKAGE_DIR | Out-Null
+          Copy-Item -Path (Join-Path $env:CORECLR_DIR "*") -Destination $env:PACKAGE_DIR -Recurse -Force
+
+          if ($env:LIBS_DIR -and (Test-Path $env:LIBS_DIR)) {
+            Copy-Item -Path (Join-Path $env:LIBS_DIR "*") -Destination $env:PACKAGE_DIR -Recurse -Force
+          }
+
+          $count = (Get-ChildItem -Path $env:PACKAGE_DIR -Recurse -File).Count
+          Write-Host "Packaged $count files"
+
+          New-Item -ItemType Directory -Force -Path "artifacts\package" | Out-Null
+          Compress-Archive -Path (Join-Path $env:PACKAGE_DIR "*") `
+            -DestinationPath "artifacts\package\dotnet-runtime-win-${{ matrix.arch }}.zip"
 
       - uses: actions/upload-artifact@v4
         with:
