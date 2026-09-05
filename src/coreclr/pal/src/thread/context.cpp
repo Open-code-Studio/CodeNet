@@ -1930,8 +1930,7 @@ CONTEXT_SetThreadContextOnPort(
     MachRet = mach_port_unguard(mach_task_self(), Port, 0);
     if (MachRet != KERN_SUCCESS)
     {
-        ASSERT("mach_port_unguard failed: %d
-", MachRet);
+        ASSERT("mach_port_unguard failed: %d\n", MachRet);
     }
 #endif // __APPLE__
 
@@ -2109,8 +2108,7 @@ EXIT:
         kern_return_t guardRet = mach_port_guard(mach_task_self(), Port, 0, 0);
         if (guardRet != KERN_SUCCESS)
         {
-            ASSERT("mach_port_guard failed: %d
-", guardRet);
+            ASSERT("mach_port_guard failed: %d\n", guardRet);
         }
     }
 #endif // __APPLE__
