@@ -236,7 +236,7 @@ void OBJECTREF_EnumMemoryRegions(OBJECTREF ref)
 //
 // We need the following to be the compiler's notion of volatile.
 //
-extern "C" RAW_KEYWORD(volatile) const GSCookie s_gsCookie = 0;
+extern "C" RAW_KEYWORD(volatile) READONLY_ATTR const GSCookie s_gsCookie = 0;
 
 #else
 __GlobalVal< GSCookie > s_gsCookie(&DacGlobals::dac__s_gsCookie);
