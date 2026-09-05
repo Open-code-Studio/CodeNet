@@ -1317,6 +1317,7 @@ Return value :
 --*/
 void MachExceptionInfo::RestoreState(mach_port_t thread)
 {
+    kern_return_t machret;
 #if defined(HOST_AMD64)
     // If we are restarting a breakpoint, we need to bump the IP back one to
     // point at the actual int 3 instructions.
@@ -1329,7 +1330,7 @@ void MachExceptionInfo::RestoreState(mach_port_t thread)
     }
     machret = mach_port_unguard(mach_task_self(), thread, 0);
     CHECK_MACH("mach_port_unguard", machret);
-    kern_return_t machret = thread_set_state(thread, x86_THREAD_STATE, (thread_state_t)&ThreadState, x86_THREAD_STATE_COUNT);
+    machret = thread_set_state(thread, x86_THREAD_STATE, (thread_state_t)&ThreadState, x86_THREAD_STATE_COUNT);
     CHECK_MACH("thread_set_state(thread)", machret);
 
     machret = thread_set_state(thread, FloatState.ash.flavor, (thread_state_t)&FloatState.ufs, FloatState.ash.count);
@@ -1343,7 +1344,7 @@ void MachExceptionInfo::RestoreState(mach_port_t thread)
 #elif defined(HOST_ARM64)
     machret = mach_port_unguard(mach_task_self(), thread, 0);
     CHECK_MACH("mach_port_unguard", machret);
-    kern_return_t machret = thread_set_state(thread, ARM_THREAD_STATE64, (thread_state_t)&ThreadState, ARM_THREAD_STATE64_COUNT);
+    machret = thread_set_state(thread, ARM_THREAD_STATE64, (thread_state_t)&ThreadState, ARM_THREAD_STATE64_COUNT);
     CHECK_MACH("thread_set_state(thread)", machret);
 
     machret = thread_set_state(thread, ARM_NEON_STATE64, (thread_state_t)&FloatState, ARM_NEON_STATE64_COUNT);
