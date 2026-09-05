@@ -475,8 +475,20 @@ void InitGSCookie()
     }
 
 #ifdef TARGET_UNIX
+#  ifndef __APPLE__
     // PAL layer is unable to extract old protection for regions that were not allocated using VirtualAlloc
     oldProtection = PAGE_READONLY;
+#  else
+    // On macOS 27 (Golden Gate) the kernel makes any page that is mprotect()'d
+    // read-only *permanently immutable* -- it can never be made writable again.
+    // The GS cookie page (here in __DATA,__data so InitGSCookie can write it)
+    // shares its 16KB page with writable globals such as g_SpinConstants, which
+    // EEStartupHelper initializes *after* this call. Restoring the page to
+    // PAGE_READONLY would therefore freeze g_SpinConstants's writes -> SIGBUS.
+    // Keep the cookie page writable on Apple; the kernel's own page immutability
+    // is the real protection and does not block runtime writes once RW.
+    oldProtection = PAGE_READWRITE;
+#  endif
 #endif // TARGET_UNIX
 
 #ifndef TARGET_UNIX
