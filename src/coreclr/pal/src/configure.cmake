@@ -895,6 +895,16 @@ if(CLR_CMAKE_TARGET_APPLE)
   set(PAL_PTRACE "ptrace((cmd), (pid), (caddr_t)(addr), (data))")
   set(HAVE_SCHED_OTHER_ASSIGNABLE 1)
 
+  # CodeNet / macOS 27 (Golden Gate): the kernel guards every thread port and raises
+  # EXC_GUARD -> SIGKILL on any thread_set_state against a thread's own port. CoreCLR's
+  # Mach exception path calls thread_set_state (RestoreState / HijackFaultingThread /
+  # CONTEXT_SetThreadContextOnPort) which is exactly what macOS 27 blocks, so the runtime
+  # can no longer start. Force the POSIX-signal SEH path instead: it resumes the faulting
+  # thread by writing the (modified) CONTEXT straight into the kernel-supplied ucontext,
+  # which the kernel restores on handler return -- no thread_set_state is ever issued.
+  # The non-Mach path is already macOS-aware (context.cpp / seh.cpp carry __APPLE__ branches).
+  set(HAVE_MACH_EXCEPTIONS 0)
+
 elseif(CLR_CMAKE_TARGET_FREEBSD)
   set(DEADLOCK_WHEN_THREAD_IS_SUSPENDED_WHILE_BLOCKED_ON_MUTEX 0)
   set(PAL_PTRACE "ptrace((cmd), (pid), (caddr_t)(addr), (data))")
