@@ -235,7 +235,13 @@ void OBJECTREF_EnumMemoryRegions(OBJECTREF ref)
 //
 // We need the following to be the compiler's notion of volatile.
 //
-extern "C" RAW_KEYWORD(volatile) const GSCookie s_gsCookie = 0;
+// The section attribute MUST be on the definition, not just the declaration:
+// a const global's actual segment placement is decided by the definition, and
+// without it the linker drops s_gsCookie into the read-only __DATA,__const page,
+// which macOS 27 makes strictly immutable (mprotect to writable is ignored) and
+// InitGSCookie() then SIGBUSes on the write. READONLY_ATTR on Apple resolves to
+// section("__DATA,__data") (writable), so the one-time startup write succeeds.
+extern "C" RAW_KEYWORD(volatile) READONLY_ATTR const GSCookie s_gsCookie = 0;
 
 #else
 __GlobalVal< GSCookie > s_gsCookie(&DacGlobals::dac__s_gsCookie);
