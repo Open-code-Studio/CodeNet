@@ -903,7 +903,9 @@ if(CLR_CMAKE_TARGET_APPLE)
   # thread by writing the (modified) CONTEXT straight into the kernel-supplied ucontext,
   # which the kernel restores on handler return -- no thread_set_state is ever issued.
   # The non-Mach path is already macOS-aware (context.cpp / seh.cpp carry __APPLE__ branches).
-  set(HAVE_MACH_EXCEPTIONS 0)
+  # FORCE overrides the cache var set by the check_cxx_source_compiles probe above so that
+  # both pal_config.h (via configure_file) and CMakeLists.txt read the same value.
+  set(HAVE_MACH_EXCEPTIONS 0 CACHE BOOL "Use POSIX signals instead of Mach exceptions for CoreCLR SEH" FORCE)
 
 elseif(CLR_CMAKE_TARGET_FREEBSD)
   set(DEADLOCK_WHEN_THREAD_IS_SUSPENDED_WHILE_BLOCKED_ON_MUTEX 0)

@@ -75,12 +75,27 @@ if(CLR_CMAKE_TARGET_OSX)
 endif()
 
 if(CLR_CMAKE_TARGET_APPLE)
-  set(PLATFORM_SOURCES
-    arch/${PAL_ARCH_SOURCES_DIR}/context.S
-    arch/${PAL_ARCH_SOURCES_DIR}/dispatchexceptionwrapper.S
-    exception/machexception.cpp
-    exception/machmessage.cpp
-  )
+  if(HAVE_MACH_EXCEPTIONS)
+    # Traditional CoreCLR macOS SEH: Mach exception ports + thread_set_state.
+    set(PLATFORM_SOURCES
+      arch/${PAL_ARCH_SOURCES_DIR}/context.S
+      arch/${PAL_ARCH_SOURCES_DIR}/dispatchexceptionwrapper.S
+      exception/machexception.cpp
+      exception/machmessage.cpp
+    )
+  else()
+    # CodeNet / macOS 27 (Golden Gate): thread ports are kernel-guarded and any
+    # thread_set_state (used by the Mach path above) raises EXC_GUARD -> SIGKILL, so
+    # the runtime cannot start. Use the POSIX-signal SEH path instead, which resumes
+    # the faulting thread via the kernel-supplied ucontext (no thread_set_state). These
+    # two arch files provide ExecuteHandlerOnCustomStack / CallSignalHandlerWrapper,
+    # normally compiled only for non-Apple Unix -- they work on macOS arm64 too.
+    set(PLATFORM_SOURCES
+      arch/${PAL_ARCH_SOURCES_DIR}/context.S
+      arch/${PAL_ARCH_SOURCES_DIR}/signalhandlerhelper.cpp
+      arch/${PAL_ARCH_SOURCES_DIR}/callsignalhandlerwrapper.S
+    )
+  endif()
 endif(CLR_CMAKE_TARGET_APPLE)
 
 if (FEATURE_ENABLE_NO_ADDRESS_SPACE_RANDOMIZATION)
