@@ -42,6 +42,7 @@ SET_DEFAULT_DEBUG_CHANNEL(EXCEPT); // some headers have code with asserts, so do
 #include <dlfcn.h>
 #include <mach-o/loader.h>
 #include <sys/mman.h>
+#include <mach/mach_port.h>
 
 using namespace CorUnix;
 
@@ -935,8 +936,12 @@ HijackFaultingThread(
     arm_thread_state64_set_pc_fptr(ts64, PAL_DispatchException);
 
     // Now set the thread state for the faulting thread so that PAL_DispatchException executes next
+    machret = mach_port_unguard(mach_task_self(), thread, 0);
+    CHECK_MACH("mach_port_unguard", machret);
     machret = thread_set_state(thread, ARM_THREAD_STATE64, (thread_state_t)&ts64, ARM_THREAD_STATE64_COUNT);
     CHECK_MACH("thread_set_state(thread)", machret);
+    machret = mach_port_guard(mach_task_self(), thread, 0, 0);
+    CHECK_MACH("mach_port_guard", machret);
 #else
 #error Unexpected architecture
 #endif
@@ -1322,6 +1327,8 @@ void MachExceptionInfo::RestoreState(mach_port_t thread)
             ThreadState.uts.ts64.__rip--;
         }
     }
+    machret = mach_port_unguard(mach_task_self(), thread, 0);
+    CHECK_MACH("mach_port_unguard", machret);
     kern_return_t machret = thread_set_state(thread, x86_THREAD_STATE, (thread_state_t)&ThreadState, x86_THREAD_STATE_COUNT);
     CHECK_MACH("thread_set_state(thread)", machret);
 
@@ -1330,7 +1337,12 @@ void MachExceptionInfo::RestoreState(mach_port_t thread)
 
     machret = thread_set_state(thread, x86_DEBUG_STATE, (thread_state_t)&DebugState, x86_DEBUG_STATE_COUNT);
     CHECK_MACH("thread_set_state(debug)", machret);
+
+    machret = mach_port_guard(mach_task_self(), thread, 0, 0);
+    CHECK_MACH("mach_port_guard", machret);
 #elif defined(HOST_ARM64)
+    machret = mach_port_unguard(mach_task_self(), thread, 0);
+    CHECK_MACH("mach_port_unguard", machret);
     kern_return_t machret = thread_set_state(thread, ARM_THREAD_STATE64, (thread_state_t)&ThreadState, ARM_THREAD_STATE64_COUNT);
     CHECK_MACH("thread_set_state(thread)", machret);
 
@@ -1339,6 +1351,9 @@ void MachExceptionInfo::RestoreState(mach_port_t thread)
 
     machret = thread_set_state(thread, ARM_DEBUG_STATE64, (thread_state_t)&DebugState, ARM_DEBUG_STATE64_COUNT);
     CHECK_MACH("thread_set_state(debug)", machret);
+
+    machret = mach_port_guard(mach_task_self(), thread, 0, 0);
+    CHECK_MACH("mach_port_guard", machret);
 #else
 #error Unexpected architecture
 #endif

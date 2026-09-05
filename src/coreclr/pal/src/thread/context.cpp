@@ -1575,6 +1575,7 @@ DWORD CONTEXTGetExceptionCodeForSignal(const siginfo_t *siginfo,
 
 #include <mach/message.h>
 #include <mach/thread_act.h>
+#include <mach/mach_port.h>
 #include "../exception/machexception.h"
 
 /*++
@@ -1923,6 +1924,17 @@ CONTEXT_SetThreadContextOnPort(
     mach_msg_type_number_t StateCount;
     thread_state_flavor_t StateFlavor;
 
+#if defined(__APPLE__)
+    // macOS 27 (Golden Gate) guards thread ports, preventing thread_set_state.
+    // Temporarily unguard the port before setting thread state.
+    MachRet = mach_port_unguard(mach_task_self(), Port, 0);
+    if (MachRet != KERN_SUCCESS)
+    {
+        ASSERT("mach_port_unguard failed: %d
+", MachRet);
+    }
+#endif // __APPLE__
+
     if (lpContext->ContextFlags & CONTEXT_ALL_FLOATING & CONTEXT_AREA_MASK)
     {
 #ifdef HOST_AMD64
@@ -2092,6 +2104,16 @@ CONTEXT_SetThreadContextOnPort(
     }
 
 EXIT:
+#if defined(__APPLE__)
+    {
+        kern_return_t guardRet = mach_port_guard(mach_task_self(), Port, 0, 0);
+        if (guardRet != KERN_SUCCESS)
+        {
+            ASSERT("mach_port_guard failed: %d
+", guardRet);
+        }
+    }
+#endif // __APPLE__
     return MachRet;
 }
 
