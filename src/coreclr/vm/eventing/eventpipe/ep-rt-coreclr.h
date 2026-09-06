@@ -1,5 +1,5 @@
-// Licensed to the CodeNet Foundation under one or more agreements.
-// The CodeNet Foundation licenses this file to you under the MIT license.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
 
 // Implementation of ep-rt.h targeting CoreCLR runtime.
 #ifndef __EVENTPIPE_RT_CORECLR_H__
