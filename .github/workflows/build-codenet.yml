@@ -118,11 +118,38 @@ jobs:
           tar czf "artifacts/package/dotnet-runtime-osx-${{ matrix.arch }}.tar.gz" -C "${PACKAGE_DIR}" .
           ls -lh artifacts/package/
 
+      - name: Build macOS .pkg Installer
+        if: runner.os == 'macOS'
+        run: |
+          set -euo pipefail
+          PKG_ROOT="artifacts/pkgroot"
+          PKG_ID="net.codenet.runtime"
+          PKG_VERSION="10.0.11"
+          PKG_DIR="artifacts/package"
+          INSTALL_DIR="/usr/local/share/dotnet"
+          rm -rf "${PKG_ROOT}"
+          mkdir -p "${PKG_ROOT}/${INSTALL_DIR}"
+          cp -R "${PACKAGE_DIR}/." "${PKG_ROOT}/${INSTALL_DIR}/"
+          mkdir -p "${PKG_ROOT}/etc/paths.d"
+          echo "${INSTALL_DIR}" > "${PKG_ROOT}/etc/paths.d/dotnet"
+
+          pkgbuild \
+            --root "${PKG_ROOT}" \
+            --identifier "${PKG_ID}" \
+            --version "${PKG_VERSION}" \
+            --install-location "/" \
+            --claim "root" \
+            "${PKG_DIR}/dotnet-runtime-osx-${{ matrix.arch }}.pkg"
+          ls -lh "${PKG_DIR}/dotnet-runtime-osx-${{ matrix.arch }}.pkg"
       - uses: actions/upload-artifact@v4
         with:
           name: dotnet-runtime-osx-${{ matrix.arch }}
           path: artifacts/package/dotnet-runtime-osx-${{ matrix.arch }}.tar.gz
-
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'macOS'
+        with:
+          name: dotnet-runtime-osx-${{ matrix.arch }}-installer
+          path: artifacts/package/dotnet-runtime-osx-${{ matrix.arch }}.pkg
   build-linux:
     name: Build Linux (${{ matrix.arch }})
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_os == 'linux' || false }}
