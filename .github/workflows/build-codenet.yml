@@ -1,5 +1,8 @@
 name: Build CodeNet Runtime
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: [main]
@@ -150,9 +153,26 @@ jobs:
         with:
           name: dotnet-runtime-osx-${{ matrix.arch }}-installer
           path: artifacts/package/dotnet-runtime-osx-${{ matrix.arch }}.pkg
+
+      - name: Publish to Release
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG=sdk-v10.0.400
+          cd artifacts/package
+          shopt -s nullglob
+          for f in dotnet-runtime-*; do
+            new="dotnet-codenet-${f#dotnet-runtime-}"
+            cp -f "$f" "$new"
+            echo "uploading $new"
+            gh release upload "$TAG" "$new" --clobber
+          done
   build-linux:
     name: Build Linux (${{ matrix.arch }})
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_os == 'linux' || false }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_os == 'linux' || github.event_name != 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -233,9 +253,26 @@ jobs:
           name: dotnet-runtime-linux-${{ matrix.arch }}
           path: artifacts/package/dotnet-runtime-linux-${{ matrix.arch }}.tar.gz
 
+      - name: Publish to Release
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG=sdk-v10.0.400
+          cd artifacts/package
+          shopt -s nullglob
+          for f in dotnet-runtime-*; do
+            new="dotnet-codenet-${f#dotnet-runtime-}"
+            cp -f "$f" "$new"
+            echo "uploading $new"
+            gh release upload "$TAG" "$new" --clobber
+          done
+
   build-windows:
     name: Build Windows (${{ matrix.arch }})
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_os == 'win' || false }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_os == 'win' || github.event_name != 'workflow_dispatch' }}
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -309,3 +346,20 @@ jobs:
         with:
           name: dotnet-runtime-win-${{ matrix.arch }}
           path: artifacts\package\dotnet-runtime-win-${{ matrix.arch }}.zip
+
+      - name: Publish to Release
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG=sdk-v10.0.400
+          cd artifacts/package
+          shopt -s nullglob
+          for f in dotnet-runtime-*; do
+            new="dotnet-codenet-${f#dotnet-runtime-}"
+            cp -f "$f" "$new"
+            echo "uploading $new"
+            gh release upload "$TAG" "$new" --clobber
+          done
