@@ -141,7 +141,6 @@ jobs:
             --identifier "${PKG_ID}" \
             --version "${PKG_VERSION}" \
             --install-location "/" \
-            --claim "root" \
             "${PKG_DIR}/dotnet-runtime-osx-${{ matrix.arch }}.pkg"
           ls -lh "${PKG_DIR}/dotnet-runtime-osx-${{ matrix.arch }}.pkg"
       - uses: actions/upload-artifact@v4
@@ -173,15 +172,24 @@ jobs:
   build-linux:
     name: Build Linux (${{ matrix.arch }})
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_os == 'linux' || github.event_name != 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        arch: [x64, arm64]
+        include:
+          - arch: x64
+            runs-on: ubuntu-latest
+          - arch: arm64
+            runs-on: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 1
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build clang libkrb5-dev libssl-dev libicu-dev zlib1g-dev
 
       - name: Build .NET Runtime for Linux ${{ matrix.arch }}
         run: |
@@ -273,11 +281,15 @@ jobs:
   build-windows:
     name: Build Windows (${{ matrix.arch }})
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_os == 'win' || github.event_name != 'workflow_dispatch' }}
-    runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
-        arch: [x64, arm64]
+        include:
+          - arch: x64
+            runs-on: windows-latest
+          - arch: arm64
+            runs-on: windows-11-arm
+    runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -285,7 +297,7 @@ jobs:
 
       - name: Build .NET Runtime for Windows ${{ matrix.arch }}
         run: |
-          .\build.cmd -arch ${{ matrix.arch }} -os win -c Release `
+          .\build.cmd -arch ${{ matrix.arch }} -os windows -c Release `
             --subset clr+libs `
             /p:TargetOS=win `
             /p:TargetArchitecture=${{ matrix.arch }} `
