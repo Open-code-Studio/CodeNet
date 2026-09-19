@@ -189,7 +189,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build clang libkrb5-dev libssl-dev libicu-dev zlib1g-dev
+          sudo apt-get install -y cmake ninja-build clang liblttng-ust-dev libkrb5-dev libssl-dev libicu-dev libcurl4-openssl-dev zlib1g-dev libnuma-dev
 
       - name: Build .NET Runtime for Linux ${{ matrix.arch }}
         run: |
@@ -297,11 +297,7 @@ jobs:
 
       - name: Build .NET Runtime for Windows ${{ matrix.arch }}
         run: |
-          .\build.cmd -arch ${{ matrix.arch }} -os windows -c Release `
-            --subset clr+libs `
-            /p:TargetOS=win `
-            /p:TargetArchitecture=${{ matrix.arch }} `
-            /p:Configuration=Release
+          .\build.cmd -arch ${{ matrix.arch }} -os windows -c Release --subset clr+libs /p:TargetOS=win /p:TargetArchitecture=${{ matrix.arch }} /p:Configuration=Release
 
       - name: Verify build output
         shell: pwsh
