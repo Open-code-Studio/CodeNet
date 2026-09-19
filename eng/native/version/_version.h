@@ -1,8 +1,8 @@
 #ifndef VER_COMPANYNAME_STR
-#define VER_COMPANYNAME_STR         ".NET Foundation"
+#define VER_COMPANYNAME_STR         "CodeNet"
 #endif
 #ifndef VER_FILEDESCRIPTION_STR
-#define VER_FILEDESCRIPTION_STR     ".NET Runtime"
+#define VER_FILEDESCRIPTION_STR     "CodeNet Runtime"
 #endif
 #ifndef VER_INTERNALNAME_STR
 #define VER_INTERNALNAME_STR        VER_FILEDESCRIPTION_STR
@@ -11,7 +11,7 @@
 #define VER_ORIGINALFILENAME_STR    VER_FILEDESCRIPTION_STR
 #endif
 #ifndef VER_PRODUCTNAME_STR
-#define VER_PRODUCTNAME_STR         ".NET"
+#define VER_PRODUCTNAME_STR         "CodeNet"
 #endif
 #undef VER_PRODUCTVERSION
 #define VER_PRODUCTVERSION          00,00,00,00000
@@ -22,7 +22,7 @@
 #undef VER_FILEVERSION_STR
 #define VER_FILEVERSION_STR         "00,00,00,00000"
 #ifndef VER_LEGALCOPYRIGHT_STR
-#define VER_LEGALCOPYRIGHT_STR      ".NET Foundation"
+#define VER_LEGALCOPYRIGHT_STR      "CodeNet"
 #endif
 #ifndef VER_DEBUG
 #define VER_DEBUG                   VS_FF_DEBUG

@@ -40,6 +40,10 @@
 
 #define DOTNET_ROOT_ENV_VAR _X("DOTNET_ROOT")
 
+// CodeNet 宿主的对外命令名是 `codenet`（见 src/native/corehost/dotnet/CMakeLists.txt），
+// 但 SDK 版本目录里的托管入口文件名仍必须是 `dotnet.dll`：该文件由 dotnet/sdk 产出，
+// CodeNet 只构建 clr+libs（运行时），并不产出 SDK。宿主在 sdk/<version>/ 下就是靠这个名字
+// 枚举与解析已安装 SDK 的，改名会导致解析不到任何 SDK、CLI 整体不可用。
 #define SDK_DOTNET_DLL _X("dotnet.dll")
 
 #define _TEXT(x) #x

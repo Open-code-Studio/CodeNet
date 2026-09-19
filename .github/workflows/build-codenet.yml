@@ -126,7 +126,7 @@ jobs:
         run: |
           set -euo pipefail
           PKG_ROOT="artifacts/pkgroot"
-          PKG_ID="net.codenet.runtime"
+          PKG_ID="hub.code.codenet"
           PKG_VERSION="10.0.11"
           PKG_DIR="artifacts/package"
           INSTALL_DIR="/usr/local/share/dotnet"
@@ -134,7 +134,7 @@ jobs:
           mkdir -p "${PKG_ROOT}/${INSTALL_DIR}"
           cp -R "${PACKAGE_DIR}/." "${PKG_ROOT}/${INSTALL_DIR}/"
           mkdir -p "${PKG_ROOT}/etc/paths.d"
-          echo "${INSTALL_DIR}" > "${PKG_ROOT}/etc/paths.d/dotnet"
+          echo "${INSTALL_DIR}" > "${PKG_ROOT}/etc/paths.d/codenet"
 
           pkgbuild \
             --root "${PKG_ROOT}" \
@@ -297,7 +297,7 @@ jobs:
 
       - name: Build .NET Runtime for Windows ${{ matrix.arch }}
         run: |
-          .\build.cmd -arch ${{ matrix.arch }} -os windows -c Release --subset clr+libs /p:TargetOS=win /p:TargetArchitecture=${{ matrix.arch }} /p:Configuration=Release
+          .\build.cmd -arch ${{ matrix.arch }} -os windows -c Release -subset clr+libs /p:TargetOS=windows /p:TargetArchitecture=${{ matrix.arch }} /p:Configuration=Release
 
       - name: Verify build output
         shell: pwsh

@@ -17,24 +17,26 @@
 
 从 [Releases](https://github.com/Open-code-Studio/CodeNet/releases) 下载对应平台的预构建运行时 / SDK（当前发布标签 `sdk-v10.0.400`）：
 
-| 平台                    | 资产                                                                                                                  | 说明                                   |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| **macOS Apple Silicon** | [dotnet-codenet-osx-arm64.tar.gz](https://github.com/Open-code-Studio/CodeNet/releases/download/sdk-v10.0.400/dotnet-codenet-osx-arm64.tar.gz) | 含修复运行时的 SDK（arm64）            |
-| **macOS Intel**         | [dotnet-codenet-osx-x64.tar.gz](https://github.com/Open-code-Studio/CodeNet/releases/download/sdk-v10.0.400/dotnet-codenet-osx-x64.tar.gz)         | 含修复运行时的 SDK（x64）              |
-| **macOS arm64（备用）** | [dotnet-codenet-osx-arm64-fixed.tar.gz](https://github.com/Open-code-Studio/CodeNet/releases/download/sdk-v10.0.400/dotnet-codenet-osx-arm64-fixed.tar.gz) | 与 arm64 版一致，作为已验证修复的备份资产 |
-| **Linux x64**           | [dotnet-codenet-linux-x64.tar.gz](https://github.com/Open-code-Studio/CodeNet/releases/download/sdk-v10.0.400/dotnet-codenet-linux-x64.tar.gz)     | 含修复运行时的 SDK（x64）              |
-| **Linux arm64**         | [dotnet-codenet-linux-arm64.tar.gz](https://github.com/Open-code-Studio/CodeNet/releases/download/sdk-v10.0.400/dotnet-codenet-linux-arm64.tar.gz) | 含修复运行时的 SDK（arm64）            |
-| **Windows x64**         | [dotnet-codenet-win-x64.zip](https://github.com/Open-code-Studio/CodeNet/releases/download/sdk-v10.0.400/dotnet-codenet-win-x64.zip)               | 含修复运行时的 SDK（x64）              |
-| **Windows arm64**       | [dotnet-codenet-win-arm64.zip](https://github.com/Open-code-Studio/CodeNet/releases/download/sdk-v10.0.400/dotnet-codenet-win-arm64.zip)           | 含修复运行时的 SDK（arm64）            |
+| 平台                    | 资产                                                                                                                  | 说明                                                          |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| **macOS Apple Silicon** | [dotnet-codenet-osx-arm64-fixed.tar.gz](https://github.com/Open-code-Studio/CodeNet/releases/download/sdk-v10.0.400/dotnet-codenet-osx-arm64-fixed.tar.gz) | 含修复运行时的完整 SDK（arm64），**推荐**                      |
+| **macOS Intel**         | [dotnet-codenet-osx-x64.tar.gz](https://github.com/Open-code-Studio/CodeNet/releases/download/sdk-v10.0.400/dotnet-codenet-osx-x64.tar.gz)         | 含修复运行时的完整 SDK（x64）                                  |
+| **Linux x64**           | [dotnet-codenet-linux-x64.tar.gz](https://github.com/Open-code-Studio/CodeNet/releases/download/sdk-v10.0.400/dotnet-codenet-linux-x64.tar.gz)     | CoreCLR + 共享框架运行时包（平铺布局，需并入既有 SDK 使用）    |
+| **Linux arm64**         | [dotnet-codenet-linux-arm64.tar.gz](https://github.com/Open-code-Studio/CodeNet/releases/download/sdk-v10.0.400/dotnet-codenet-linux-arm64.tar.gz) | 同上（arm64）                                                  |
+| **Windows x64**         | [dotnet-codenet-win-x64.zip](https://github.com/Open-code-Studio/CodeNet/releases/download/sdk-v10.0.400/dotnet-codenet-win-x64.zip)               | 同上（x64，zip）                                               |
+| **Windows arm64**       | [dotnet-codenet-win-arm64.zip](https://github.com/Open-code-Studio/CodeNet/releases/download/sdk-v10.0.400/dotnet-codenet-win-arm64.zip)           | 同上（arm64，zip）                                             |
 
 > [!NOTE]
-> 下载后解压，目录内的 `dotnet11x64`（或对应架构目录）即 CodeNet SDK：
+> macOS 两个资产是**完整 SDK 布局**，解压后顶层目录为 `dotnet11x64/`：
 > ```bash
-> tar xzf dotnet-codenet-osx-arm64.tar.gz
+> tar xzf dotnet-codenet-osx-arm64-fixed.tar.gz
 > export DOTNET_ROOT="$PWD/dotnet11x64"
 > export PATH="$DOTNET_ROOT:$PATH"
 > ```
 > 下游构建（如 SulfurLauncher 的 `publish-*.yml`）正是从此 Release 拉取 SDK，并设置 `DOTNET_ROOT` 后执行自包含发布，产物天然携带修复运行时。
+>
+> [!IMPORTANT]
+> 同一发布标签下还存在 CI（`build-codenet.yml`）自动上传的**同名运行时包** `dotnet-codenet-osx-arm64.tar.gz`。它是平铺的 CoreCLR + 共享框架文件（`./System.Runtime.dll` 一类），**不含 `dotnet11x64/` SDK 布局**，不能直接当 SDK 使用——请认准带 `-fixed` 后缀的资产。
 
 ## 修复了什么
 
@@ -81,7 +83,7 @@ brew install cmake ninja icu4c
 合并后的运行时位于 `artifacts/package/runtime`，并产出：
 
 - `dotnet-runtime-osx-<arch>.tar.gz` — 可直接解压使用的运行时包
-- `dotnet-runtime-osx-<arch>.pkg` — macOS 安装包（标识符 `net.codenet.runtime`，版本 `10.0.11`，安装到 `/usr/local/share/dotnet`，并通过 `etc/paths.d/dotnet` 写入 PATH）
+- `dotnet-runtime-osx-<arch>.pkg` — macOS 安装包（标识符 `hub.code.codenet`，版本 `10.0.11`，安装到 `/usr/local/share/dotnet`，并通过 `etc/paths.d/codenet` 写入 PATH）
 
 > [!NOTE]
 > 也可使用仓库根的 `./dotnet.sh` 调用 CodeNet 自带的 dotnet CLI，它会隔离运行时查找（`DOTNET_MULTILEVEL_LOOKUP=0`）以保证构建确定性。
