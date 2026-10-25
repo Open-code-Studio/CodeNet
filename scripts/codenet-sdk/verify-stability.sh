@@ -66,6 +66,29 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# ---------------------------------------------------------------------------
+# 0. 资源预检：SysV 信号量
+# ---------------------------------------------------------------------------
+# CoreCLR 的 PAL 为线程 semget 一个 IPC_PRIVATE 信号量集，进程被信号杀死时不会回收；
+# 实测正常构建也会缓慢泄漏（~30 个/次）。池子吃干后**所有** .NET 进程（含官方运行时）都会
+# 报 “Failed to create CoreCLR”，非常容易被误判成代码不稳定，所以先拦一道。
+# 详见 cleanup-codenet-ipc.sh 的说明。
+sem_usage() { # 输出 "已用 上限 百分比"
+    local used max pct
+    used="$(ipcs -s 2>/dev/null | awk -v u="$(id -un)" '$1=="s" && $5==u' | wc -l | tr -d ' ')"
+    max="$(sysctl -n kern.sysv.semmni 2>/dev/null || echo 0)"
+    if [ "${max:-0}" -gt 0 ] 2>/dev/null; then pct=$(( used * 100 / max )); else pct=0; fi
+    echo "${used} ${max} ${pct}"
+}
+set -- $(sem_usage)
+SEM_USED="$1"; SEM_MAX="$2"; SEM_PCT="$3"
+CLEANUP_HINT="scripts/codenet-sdk/cleanup-codenet-ipc.sh --apply"
+if [ "$SEM_PCT" -gt 90 ] 2>/dev/null; then
+    die "SysV 信号量已用 ${SEM_USED}/${SEM_MAX}（${SEM_PCT}%），.NET 会全线起不来；先清理：$CLEANUP_HINT"
+elif [ "$SEM_PCT" -gt 50 ] 2>/dev/null; then
+    echo "::warning::SysV 信号量已用 ${SEM_USED}/${SEM_MAX}（${SEM_PCT}%），建议先跑 $CLEANUP_HINT"
+fi
+
 if [ -z "$PROJECT" ]; then
     WORK="$(mktemp -d)"
     echo "创建临时工程：$WORK/app"
@@ -122,7 +145,8 @@ errors=0    # 正常非零退出（编译错误等），不算崩溃
 printf '进度：'
 for _ in $(seq 1 "$RUNS"); do
     rm -rf "$PROJECT/obj" "$PROJECT/bin"
-    "$CODENET" build -c Release >/dev/null 2>&1
+    # 必须在工程目录下执行，否则 MSBuild 找不到 csproj（MSB1003），会被算成 E 而不是崩溃。
+    ( cd "$PROJECT" && "$CODENET" build -c Release ) >/dev/null 2>&1
     rc=$?
     if [ "$rc" -ge 128 ]; then
         crashes=$((crashes + 1)); printf 'X'
@@ -137,6 +161,11 @@ echo
 
 rate=$(awk -v c="$crashes" -v n="$RUNS" 'BEGIN{printf "%.0f", 100*c/n}')
 echo "崩溃 $crashes/$RUNS (${rate}%)   其他失败 $errors/$RUNS"
+
+# 收尾再看一眼信号量：跑之前 ${SEM_USED} 个，跑完剩多少。正常会小幅上涨（每次构建漏几十个），
+# 若一次涨几千，说明有进程在异常终止。
+set -- $(sem_usage)
+echo "SysV 信号量：${SEM_USED} -> ${1}/${2}（${3}%）  超过 50% 时用 $CLEANUP_HINT 清理"
 
 if [ "$crashes" -gt 0 ]; then
     echo "::error::检测到信号崩溃 —— SDK CLI 的并发 GC 大概率没关，检查 sdk/<ver>/dotnet.runtimeconfig.json"
