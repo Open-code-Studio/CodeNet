@@ -105,11 +105,21 @@ namespace CorUnix
             sem_t m_semResume; // resumption semaphore
             BOOL m_fSemaphoresInitialized;
 #elif USE_SYSV_SEMAPHORES
-            // necessary id's and sembuf structures for SysV semaphores
-            int m_nSemsuspid; // id for the suspend semaphore
-            int m_nSemrespid; // id for the resume semaphore
-            struct sembuf m_sbSemwait; // struct representing a wait operation
-            struct sembuf m_sbSempost; // struct representing a post operation
+            // SysV 方案下不再每个线程 semget(IPC_PRIVATE) 两次，而是共用一个进程级信号量
+            // 池（见 threadsusp.cpp 的 CSuspensionSemaphorePool），每个线程从池里领两个槽位。
+            // 内核里持久化的信号量集数量因此从「2 × 线程数」降到「进程数个」，再配合退出 /
+            // abort 时的自动回收，进程异常结束也不会把 kern.sysv.semmni 耗尽。
+            int m_nSemsuspid = 0; // 持有 suspend 槽位的信号量集 id（0 表示尚未领取）
+            int m_nSemrespid = 0; // 持有 resume 槽位的信号量集 id（与上面可能是同一个集合）
+            int m_nSuspSlot = 0; // suspend 槽位在集合内的 sem_num
+            int m_nResSlot = 0; // resume 槽位在集合内的 sem_num
+
+            // 挂起与恢复的等待 / 投递各需一份 sembuf：它们现在共享同一个集合，
+            // 只能靠 sem_num 区分，不能再像以前那样靠不同的 id 区分。
+            struct sembuf m_sbSuspwait; // suspend 等待
+            struct sembuf m_sbSusppost; // suspend 投递
+            struct sembuf m_sbReswait; // resume 等待
+            struct sembuf m_sbRespost; // resume 投递
 #elif USE_PTHREAD_CONDVARS
             pthread_cond_t m_condSusp; // suspension condition variable
             pthread_mutex_t m_mutexSusp; // mutex associated with the condition above
@@ -189,14 +199,6 @@ namespace CorUnix
                 )
             {
                 return m_nSemsuspid;
-            };
-
-            sembuf*
-            GetSemaphorePostBuffer(
-                void
-                )
-            {
-                return &m_sbSempost;
             };
 #endif // USE_POSIX_SEMAPHORES
 

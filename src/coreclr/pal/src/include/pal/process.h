@@ -106,6 +106,16 @@ Abstract
 (no parameters, no return value)
 --*/
 VOID PROCCleanupThreadSemIds(VOID);
+
+/*++
+Function:
+  PALDestroySuspensionSemaphorePool(VOID);
+
+Abstract
+  Delete the process-wide SysV suspension semaphore sets. Called from the abort
+  path and from process exit; safe to call multiple times.
+--*/
+VOID PALDestroySuspensionSemaphorePool(VOID);
 #endif
 
 /*++

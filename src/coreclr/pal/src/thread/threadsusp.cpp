@@ -32,6 +32,7 @@ Revision History:
 #include <fcntl.h>
 #include <errno.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <limits.h>
 #include <debugmacrosext.h>
@@ -52,6 +53,233 @@ performing one suspension or resumption in the PAL at a time. */
 #ifdef USE_GLOBAL_LOCK_FOR_SUSPENSION
 static LONG g_ssSuspensionLock = 0;
 #endif
+
+#if USE_SYSV_SEMAPHORES
+/*++
+Class:
+  CSuspensionSemaphorePool
+
+Abstract:
+  进程级 SysV 信号量池，用来替代「每个线程 semget(IPC_PRIVATE) 两次」的做法。
+
+  为什么需要它（2026-10 实测事故）：SysV 信号量集是内核级持久对象，只在 semctl(IPC_RMID)
+  时才回收。PAL 以前在每个 CThreadSuspensionInfo 里为 suspend / resume 各建一个私有集合
+  （两份 id），靠 CThreadSuspensionInfo 的析构函数删除；可进程被信号杀死（SIGSEGV/SIGABRT）
+  时析构根本不会跑，而且进程退出时也未必所有线程对象都被析构（PROCCleanupThreadSemIds
+  现在没有任何调用点）。实测一次 `codenet build` 漏 64 个、跑一个托管程序漏 40 个，
+  攒到 kern.sysv.semmni（87381）的 83% 后，本机**所有** .NET 进程都开始报
+  "Failed to create CoreCLR"（连官方运行时也不例外）。
+
+  改成进程级池之后：
+    - 内核持久对象从「2 × 线程数」降到「集合数」（一个集合 512 个 sem，够 256 个线程）；
+    - 线程创建 / 销毁只做槽位领取与归还，不再产生新的内核对象；
+    - 正常退出（atexit）和 PROCAbort 都会 IPC_RMID，所以只有 SIGKILL 这类无法拦截的
+      情况才会漏掉至多几个集合。
+
+  槽位归还时会把两个 sem 的计数复位为 0，避免下一个使用者继承到残留的 post。
+--*/
+namespace
+{
+    class CSuspensionSemaphorePool
+    {
+    public:
+        // 每个集合容纳的 sem 数；一半给 suspend、一半给 resume。macOS 的 semmsl 是 87381，
+        // 这里刻意取小值：池的意义是不再用大量小集合，而不是再造一个大对象。
+        static const int kSemsPerSet = 512;
+        static const int kPairsPerSet = kSemsPerSet / 2;
+        // 理论上限（2048 个线程的并发挂起槽位）。超出说明有线程没归还槽位，宁可直接失败。
+        static const int kMaxSets = 8;
+
+        static CSuspensionSemaphorePool& GetInstance()
+        {
+            // 进程级单例。C++11 起的函数内静态变量初始化是线程安全的。
+            static CSuspensionSemaphorePool s_instance;
+            return s_instance;
+        }
+
+        // 领取一个（suspend, resume）槽位对。成功返回 true，并把集合 id 与两个槽位写回。
+        bool Acquire(int& setId, int& suspSlot, int& resSlot);
+
+        // 归还槽位对：复位计数后放回空闲链表。
+        void Release(int setId, int suspSlot, int resSlot);
+
+        // 删除所有集合（退出 / abort 时调用）。可重复调用。
+        void DestroyAll();
+
+    private:
+        // id 必须初始化成 -1：0 是合法的 semid，误当成「有效集合」会删到别人的信号量。
+        CSuspensionSemaphorePool()
+        {
+            for (int i = 0; i < kMaxSets; i++)
+            {
+                m_sets[i].id = -1;
+                m_sets[i].freeCount = 0;
+            }
+        }
+
+        struct SetInfo
+        {
+            int id; // semget 返回的集合 id；-1 表示该槽位未使用
+            int freeCount;
+            int freePairs[kPairsPerSet];
+        };
+
+        bool CreateSetLocked(SetInfo** ppSet);
+        static void AtExit() { GetInstance().DestroyAll(); }
+
+        pthread_mutex_t m_lock = PTHREAD_MUTEX_INITIALIZER;
+        SetInfo m_sets[kMaxSets] = {};
+        int m_setCount = 0;
+    };
+
+    bool CSuspensionSemaphorePool::CreateSetLocked(SetInfo** ppSet)
+    {
+        if (m_setCount >= kMaxSets)
+        {
+            ERROR("SysV 信号量池已满（%d 个集合），拒绝继续创建\n", kMaxSets);
+            return false;
+        }
+
+        int id = semget(IPC_PRIVATE, kSemsPerSet, IPC_CREAT | 0666);
+        if (id == -1)
+        {
+            ERROR("semget 失败，errno=%d (%s)\n", errno, strerror(errno));
+            return false;
+        }
+
+        union semun semunData;
+        semunData.val = 0;
+        for (int i = 0; i < kSemsPerSet; i++)
+        {
+            if (-1 == semctl(id, i, SETVAL, semunData))
+            {
+                ERROR("semctl(SETVAL) 失败，errno=%d (%s)\n", errno, strerror(errno));
+                semctl(id, 0, IPC_RMID, semunData);
+                return false;
+            }
+        }
+
+        SetInfo* pSet = &m_sets[m_setCount++];
+        pSet->id = id;
+        pSet->freeCount = kPairsPerSet;
+        for (int i = 0; i < kPairsPerSet; i++)
+        {
+            // 逆序压栈，让第一个领取者拿到 0 号槽位，便于排查
+            pSet->freePairs[i] = kPairsPerSet - 1 - i;
+        }
+
+        // 第一次建集合时挂上退出清理。atexit 只在正常退出路径触发，崩溃路径由 PROCAbort 负责。
+        if (m_setCount == 1)
+        {
+            atexit(&CSuspensionSemaphorePool::AtExit);
+        }
+
+        *ppSet = pSet;
+        return true;
+    }
+
+    bool CSuspensionSemaphorePool::Acquire(int& setId, int& suspSlot, int& resSlot)
+    {
+        pthread_mutex_lock(&m_lock);
+
+        SetInfo* pSet = nullptr;
+        for (int i = 0; i < m_setCount; i++)
+        {
+            if (m_sets[i].freeCount > 0)
+            {
+                pSet = &m_sets[i];
+                break;
+            }
+        }
+
+        if (pSet == nullptr && !CreateSetLocked(&pSet))
+        {
+            pthread_mutex_unlock(&m_lock);
+            return false;
+        }
+
+        int pair = pSet->freePairs[--pSet->freeCount];
+        int setid = pSet->id;
+        int sSlot = pair * 2;
+        int rSlot = pair * 2 + 1;
+
+        pthread_mutex_unlock(&m_lock);
+
+        // 复用的槽位可能留着上一次的 post，这里复位成 0。
+        union semun semunData;
+        semunData.val = 0;
+        if (-1 == semctl(setid, sSlot, SETVAL, semunData) ||
+            -1 == semctl(setid, rSlot, SETVAL, semunData))
+        {
+            ERROR("semctl(SETVAL) 复位槽位失败，errno=%d (%s)\n", errno, strerror(errno));
+            Release(setid, sSlot, rSlot);
+            return false;
+        }
+
+        setId = setid;
+        suspSlot = sSlot;
+        resSlot = rSlot;
+        return true;
+    }
+
+    void CSuspensionSemaphorePool::Release(int setId, int suspSlot, int resSlot)
+    {
+        pthread_mutex_lock(&m_lock);
+
+        for (int i = 0; i < m_setCount; i++)
+        {
+            SetInfo* pSet = &m_sets[i];
+            if (pSet->id != setId)
+            {
+                continue;
+            }
+
+            int pair = suspSlot / 2;
+            if (pSet->freeCount < kPairsPerSet)
+            {
+                pSet->freePairs[pSet->freeCount++] = pair;
+            }
+            break;
+        }
+
+        pthread_mutex_unlock(&m_lock);
+    }
+
+    void CSuspensionSemaphorePool::DestroyAll()
+    {
+        // 退出路径上不能死等锁：如果别的线程正持有锁而卡住，atexit 会变成挂死而不是退出。
+        // 拿不到锁就直接往下走（进程马上结束，少删一个集合也无所谓）。
+        bool locked = (pthread_mutex_trylock(&m_lock) == 0);
+
+        union semun semunData;
+        semunData.val = 0;
+        for (int i = 0; i < m_setCount; i++)
+        {
+            if (m_sets[i].id != -1)
+            {
+                // 失败无所谓：进程马上就没了，内核会连带回收。
+                semctl(m_sets[i].id, 0, IPC_RMID, semunData);
+                m_sets[i].id = -1;
+                m_sets[i].freeCount = 0;
+            }
+        }
+        m_setCount = 0;
+
+        if (locked)
+        {
+            pthread_mutex_unlock(&m_lock);
+        }
+    }
+}
+
+// 供 PROCAbort / 进程退出路径调用：把内存里所有信号量集合还给内核。
+// process.h 里的声明在 extern "C" 块中，这里必须同样用 C 链接，否则链接期找不到符号。
+extern "C" void
+PALDestroySuspensionSemaphorePool()
+{
+    CSuspensionSemaphorePool::GetInstance().DestroyAll();
+}
+#endif // USE_SYSV_SEMAPHORES
 
 /*++
 Function:
@@ -560,7 +788,7 @@ CThreadSuspensionInfo::PostOnSuspendSemaphore()
         ASSERT("sem_post returned -1 and set errno to %d (%s)\n", errno, strerror(errno));
     }
 #elif USE_SYSV_SEMAPHORES
-    if (semop(m_nSemsuspid, &m_sbSempost, 1) == -1)
+    if (semop(m_nSemsuspid, &m_sbSusppost, 1) == -1)
     {
         ASSERT("semop - post returned -1 and set errno to %d (%s)\n", errno, strerror(errno));
     }
@@ -616,7 +844,7 @@ CThreadSuspensionInfo::WaitOnSuspendSemaphore()
         ASSERT("sem_wait returned -1 and set errno to %d (%s)\n", errno, strerror(errno));
     }
 #elif USE_SYSV_SEMAPHORES
-    while (semop(m_nSemsuspid, &m_sbSemwait, 1) == -1)
+    while (semop(m_nSemsuspid, &m_sbSuspwait, 1) == -1)
     {
         ASSERT("semop wait returned -1 and set errno to %d (%s)\n", errno, strerror(errno));
     }
@@ -670,7 +898,7 @@ CThreadSuspensionInfo::PostOnResumeSemaphore()
         ASSERT("sem_post returned -1 and set errno to %d (%s)\n", errno, strerror(errno));
     }
 #elif USE_SYSV_SEMAPHORES
-    if (semop(m_nSemrespid, &m_sbSempost, 1) == -1)
+    if (semop(m_nSemrespid, &m_sbRespost, 1) == -1)
     {
         ASSERT("semop - post returned -1 and set errno to %d (%s)\n", errno, strerror(errno));
     }
@@ -726,7 +954,7 @@ CThreadSuspensionInfo::WaitOnResumeSemaphore()
         ASSERT("sem_wait returned -1 and set errno to %d (%s)\n", errno, strerror(errno));
     }
 #elif USE_SYSV_SEMAPHORES
-    while (semop(m_nSemrespid, &m_sbSemwait, 1) == -1)
+    while (semop(m_nSemrespid, &m_sbReswait, 1) == -1)
     {
         ASSERT("semop wait returned -1 and set errno to %d (%s)\n", errno, strerror(errno));
     }
@@ -853,53 +1081,35 @@ CThreadSuspensionInfo::InitializePreCreate()
     m_fSemaphoresInitialized = TRUE;
 
 #elif USE_SYSV_SEMAPHORES
-    // preparing to initialize the SysV semaphores.
-    union semun semunData;
-    m_nSemsuspid = semget(IPC_PRIVATE, 1, IPC_CREAT | 0666);
-    if (m_nSemsuspid == -1)
+    // 不再是「两个 IPC_PRIVATE 集合」，而是从进程级池里领一对槽位（见 CSuspensionSemaphorePool）。
+    if (!CSuspensionSemaphorePool::GetInstance().Acquire(m_nSemsuspid, m_nSuspSlot, m_nResSlot))
     {
-        ASSERT("semget for suspension sem id returned -1 and set errno to %d (%s)\n", errno, strerror(errno));
+        ASSERT("failed to acquire suspension semaphore slots\n");
+        m_nSemsuspid = 0;
+        m_nSemrespid = 0;
+        iError = EAGAIN;
         goto InitializePreCreateExit;
     }
 
-    m_nSemrespid = semget(IPC_PRIVATE, 1, IPC_CREAT | 0666);
-    if (m_nSemrespid == -1)
-    {
-        ASSERT("semget for resumption sem id returned -1 and set errno to %d (%s)\n", errno, strerror(errno));
-        goto InitializePreCreateExit;
-    }
+    // 两个槽位在同一个集合里，resume 的 id 与 suspend 相同。
+    m_nSemrespid = m_nSemsuspid;
 
-    if (m_nSemsuspid == m_nSemrespid)
-    {
-        ASSERT("Suspension and Resumption Semaphores have the same id\n");
-        goto InitializePreCreateExit;
-    }
+    // suspend 与 resume 现在共用一个集合，只能用 sem_num 区分。
+    m_sbSuspwait.sem_num = m_nSuspSlot;
+    m_sbSuspwait.sem_op = -1;
+    m_sbSuspwait.sem_flg = 0;
 
-    semunData.val = 0;
-    iError = semctl(m_nSemsuspid, 0, SETVAL, semunData);
-    if (iError == -1)
-    {
-        ASSERT("semctl for suspension sem id returned -1 and set errno to %d (%s)\n", errno, strerror(errno));
-        goto InitializePreCreateExit;
-    }
+    m_sbSusppost.sem_num = m_nSuspSlot;
+    m_sbSusppost.sem_op = 1;
+    m_sbSusppost.sem_flg = 0;
 
-    semunData.val = 0;
-    iError = semctl(m_nSemrespid, 0, SETVAL, semunData);
-    if (iError == -1)
-    {
-        ASSERT("semctl for resumption sem id returned -1 and set errno to %d (%s)\n", errno, strerror(errno));
-        goto InitializePreCreateExit;
-    }
+    m_sbReswait.sem_num = m_nResSlot;
+    m_sbReswait.sem_op = -1;
+    m_sbReswait.sem_flg = 0;
 
-    // initialize suspend semaphore
-    m_sbSemwait.sem_num = 0;
-    m_sbSemwait.sem_op = -1;
-    m_sbSemwait.sem_flg = 0;
-
-    // initialize resume semaphore
-    m_sbSempost.sem_num = 0;
-    m_sbSempost.sem_op = 1;
-    m_sbSempost.sem_flg = 0;
+    m_sbRespost.sem_num = m_nResSlot;
+    m_sbRespost.sem_op = 1;
+    m_sbRespost.sem_flg = 0;
 #elif USE_PTHREAD_CONDVARS
     iError = pthread_cond_init(&m_condSusp, NULL);
     if (iError != 0)
@@ -1007,39 +1217,17 @@ CThreadSuspensionInfo::~CThreadSuspensionInfo()
 Function:
   DestroySemaphoreIds
 
-DestroySemaphoreIds is called from the CThreadSuspensionInfo destructor and
-from PROCCleanupThreadSemIds. If a thread exits before shutdown or is suspended
-during shutdown, its destructor will be invoked and the semaphore ids destroyed.
-In assert or exceptions situations that are suspension unsafe,
-PROCCleanupThreadSemIds is called, which uses DestroySemaphoreIds.
+DestroySemaphoreIds is called from the CThreadSuspensionInfo destructor. 信号量集本身
+由进程级池持有并在退出时统一回收，这里只把槽位还回去，不再产生 / 删除内核对象。
 --*/
 void
 CThreadSuspensionInfo::DestroySemaphoreIds()
 {
-    union semun semunData;
     if (m_nSemsuspid != 0)
     {
-        semunData.val = 0;
-        if (0 != semctl(m_nSemsuspid, 0, IPC_RMID, semunData))
-        {
-            ERROR("semctl(Semsuspid) failed and set errno to %d (%s)\n", errno, strerror(errno));
-        }
-        else
-        {
-            m_nSemsuspid = 0;
-        }
-    }
-    if (this->m_nSemrespid)
-    {
-        semunData.val = 0;
-        if (0 != semctl(m_nSemrespid, 0, IPC_RMID, semunData))
-        {
-            ERROR("semctl(Semrespid) failed and set errno to %d (%s)\n", errno, strerror(errno));
-        }
-        else
-        {
-            m_nSemrespid = 0;
-        }
+        CSuspensionSemaphorePool::GetInstance().Release(m_nSemsuspid, m_nSuspSlot, m_nResSlot);
+        m_nSemsuspid = 0;
+        m_nSemrespid = 0;
     }
 }
 #endif // USE_SYSV_SEMAPHORES
