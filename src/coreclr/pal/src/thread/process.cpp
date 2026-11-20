@@ -2836,6 +2836,12 @@ PROCAbort(int signal, siginfo_t* siginfo)
     // Do any shutdown cleanup before aborting or creating a core dump
     PROCNotifyProcessShutdown();
 
+#if USE_SYSV_SEMAPHORES
+    // 崩溃路径上把信号量池还给内核。abort 之后本进程的析构函数不会再跑，
+    // 历史上正是这条路径让每次崩溃留下几十个集合，攒多了会把整机 .NET 拖死。
+    PALDestroySuspensionSemaphorePool();
+#endif
+
     PROCCreateCrashDumpIfEnabled(signal, siginfo, true);
 
     // Restore all signals; the SIGABORT handler to prevent recursion and
